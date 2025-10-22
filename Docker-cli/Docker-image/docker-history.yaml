@@ -1,0 +1,235 @@
+✅ What is docker history?
+
+The docker history command shows the history of an image — i.e., all the layers that make up a Docker image along with their sizes, creation commands, authors, and timestamps.
+
+Each layer usually corresponds to a command in the Dockerfile (like RUN, COPY, ADD, etc.).
+
+📘 Example:
+
+docker image history nginx:latest
+
+This will output something like:
+
+IMAGE          CREATED        CREATED BY                                      SIZE      COMMENT
+d1a364dc548d   2 days ago     /bin/sh -c #(nop)  CMD ["nginx" "-g" "daemon…   0B        
+<missing>      2 days ago     /bin/sh -c #(nop)  STOPSIGNAL SIGTERM           0B        
+<missing>      2 days ago     /bin/sh -c #(nop)  EXPOSE 80                    0B        
+<missing>      2 days ago     /bin/sh -c #(nop)  ENTRYPOINT ["/docker-entr…   0B        
+...
+
+🧱 What does each column mean?
+
+| Column         | Description                                                    |
+| -------------- | -------------------------------------------------------------- |
+| **IMAGE**      | Image ID or `<missing>` if the layer is part of the base image |
+| **CREATED**    | Time when the layer was created                                |
+| **CREATED BY** | Command that created this layer (from Dockerfile)              |
+| **SIZE**       | Size of the layer                                              |
+| **COMMENT**    | Optional comment if provided during commit                     |
+
+
+🧮 Options and Parameters
+
+| Option          | Description                                         | Example                           |
+| --------------- | --------------------------------------------------- | --------------------------------- |
+| `--no-trunc`    | Don't truncate output                               | `docker history --no-trunc nginx` |
+| `--quiet`, `-q` | Only show image IDs                                 | `docker history -q myapp`         |
+| `--human`, `-H` | Print sizes in human-readable format (default true) | `docker history -H myapp`         |
+
+--------
+--human or -H
+--------
+
+~ ➜  docker history  app:v1 -H     
+IMAGE          CREATED          CREATED BY                                      SIZE      COMMENT
+8b331c1dc27d   2 minutes ago    /bin/sh -c #(nop) COPY dir:0c9de0613baa19c7f…   17.3MB    
+f9fbbc2013b5   25 minutes ago   /bin/sh -c apt install -y curl                  15.7MB    
+b1ec69c6f826   25 minutes ago   /bin/sh -c apt update                           54.9MB    
+edbfe74c41f8   14 months ago    /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B        
+<missing>      14 months ago    /bin/sh -c #(nop) ADD file:c2e78eb585ec4e503…   78MB      
+<missing>      14 months ago    /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B        
+<missing>      14 months ago    /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B        
+<missing>      14 months ago    /bin/sh -c #(nop)  ARG LAUNCHPAD_BUILD_ARCH     0B        
+<missing>      14 months ago    /bin/sh -c #(nop)  ARG RELEASE                  0B        
+
+~ ➜  docker history -H=false app:v1
+
+IMAGE          CREATED AT             CREATED BY                                      SIZE       COMMENT
+8b331c1dc27d   2025-10-04T05:51:40Z   /bin/sh -c #(nop) COPY dir:0c9de0613baa19c7f…   17298039   
+f9fbbc2013b5   2025-10-04T05:28:34Z   /bin/sh -c apt install -y curl                  15737871   
+b1ec69c6f826   2025-10-04T05:28:14Z   /bin/sh -c apt update                           54920069   
+edbfe74c41f8   2024-08-01T14:23:55Z   /bin/sh -c #(nop)  CMD ["/bin/bash"]            0          
+<missing>      2024-08-01T14:23:55Z   /bin/sh -c #(nop) ADD file:c2e78eb585ec4e503…   78047228   
+<missing>      2024-08-01T14:23:53Z   /bin/sh -c #(nop)  LABEL org.opencontainers.…   0          
+<missing>      2024-08-01T14:23:53Z   /bin/sh -c #(nop)  LABEL org.opencontainers.…   0          
+<missing>      2024-08-01T14:23:53Z   /bin/sh -c #(nop)  ARG LAUNCHPAD_BUILD_ARCH     0          
+<missing>      2024-08-01T14:23:53Z   /bin/sh -c #(nop)  ARG RELEASE                  0
+
+-------
+--no-trunc
+------
+
+~ ➜  docker history app:v1 --no-trunc
+IMAGE                                                                     CREATED          CREATED BY                                                                                             SIZE      COMMENT
+sha256:8b331c1dc27df907cc5a1eb24da79d5f5c827e5275b30de6ba57a7746711c161   3 minutes ago    /bin/sh -c #(nop) COPY dir:0c9de0613baa19c7f16d08cf33939e0d08fc25a654501da84b4706b77aa16cac in /app    17.3MB    
+sha256:f9fbbc2013b5c7b11124529fabb86083cf23d7ac8f639459ff470a3ac49fd370   26 minutes ago   /bin/sh -c apt install -y curl                                                                         15.7MB    
+sha256:b1ec69c6f8268d12f73cb46e8a05af07cb2972056d9177b47bbeb4c46e7276df   27 minutes ago   /bin/sh -c apt update                                                                                  54.9MB    
+sha256:edbfe74c41f8a3501ce542e137cf28ea04dd03e6df8c9d66519b6ad761c2598a   14 months ago    /bin/sh -c #(nop)  CMD ["/bin/bash"]                                                                   0B        
+<missing>                                                                 14 months ago    /bin/sh -c #(nop) ADD file:c2e78eb585ec4e503f14c4ea98f4962c998f5eb075749507953f85387742694b in /       78MB      
+<missing>                                                                 14 months ago    /bin/sh -c #(nop)  LABEL org.opencontainers.image.version=24.04                                        0B        
+<missing>                                                                 14 months ago    /bin/sh -c #(nop)  LABEL org.opencontainers.image.ref.name=ubuntu                                      0B        
+<missing>                                                                 14 months ago    /bin/sh -c #(nop)  ARG LAUNCHPAD_BUILD_ARCH                                                            0B        
+<missing>                                                                 14 months ago    /bin/sh -c #(nop)  ARG RELEASE
+
+--------
+--quiet or -q
+--------
+
+~ ➜  docker history app:v1 -q
+8b331c1dc27d
+f9fbbc2013b5
+b1ec69c6f826
+edbfe74c41f8
+<missing>
+<missing>
+<missing>
+<missing>
+<missing>
+
+---------------------------------------------
+---------------------------------------------
+Docker image history breakdown
+---------------------------------------------
+---------------------------------------------
+
+~ ➜  cat Dockerfile 
+FROM ubuntu
+RUN apt update
+RUN apt install -y curl
+COPY . /app
+
+
+~ ➜  docker image build -t app:v1 .
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            BuildKit is currently disabled; enable it by removing the DOCKER_BUILDKIT=0
+            environment-variable.
+
+Sending build context to Docker daemon  18.79MB
+Step 1/4 : FROM ubuntu
+ ---> edbfe74c41f8
+Step 2/4 : RUN apt update
+ ---> Using cache
+ ---> b1ec69c6f826
+Step 3/4 : RUN apt install -y curl
+ ---> Using cache
+ ---> f9fbbc2013b5
+Step 4/4 : COPY . /app
+ ---> 8b331c1dc27d
+Successfully built 8b331c1dc27d
+Successfully tagged app:v1
+
+
+~ ➜  docker image history app:v1                  
+IMAGE          CREATED          CREATED BY                                      SIZE      COMMENT
+9500c7de2b7d   25 seconds ago   /bin/sh -c #(nop) COPY dir:f583a5715bfedda7d…   17.5MB    
+f9fbbc2013b5   30 seconds ago   /bin/sh -c apt install -y curl                  15.7MB    
+b1ec69c6f826   50 seconds ago   /bin/sh -c apt update                           54.9MB    
+edbfe74c41f8   14 months ago    /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B        
+<missing>      14 months ago    /bin/sh -c #(nop) ADD file:c2e78eb585ec4e503…   78MB      
+<missing>      14 months ago    /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B        
+<missing>      14 months ago    /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B        
+<missing>      14 months ago    /bin/sh -c #(nop)  ARG LAUNCHPAD_BUILD_ARCH     0B        
+<missing>      14 months ago    /bin/sh -c #(nop)  ARG RELEASE                  0B        
+
+~ ➜  docker image history ubuntu
+IMAGE          CREATED         CREATED BY                                      SIZE      COMMENT
+edbfe74c41f8   14 months ago   /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B        
+<missing>      14 months ago   /bin/sh -c #(nop) ADD file:c2e78eb585ec4e503…   78MB      
+<missing>      14 months ago   /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B        
+<missing>      14 months ago   /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B        
+<missing>      14 months ago   /bin/sh -c #(nop)  ARG LAUNCHPAD_BUILD_ARCH     0B        
+<missing>      14 months ago   /bin/sh -c #(nop)  ARG RELEASE                  0B        
+
+
+---
+🔹 Layer 1 — Topmost (your last command)
+
+9500c7de2b7d   25 seconds ago   /bin/sh -c #(nop) COPY dir:...   17.5MB
+
+🔍 Command: COPY . /app
+
+💡 Explanation:
+
+i) This layer contains everything from your current directory (excluding .dockerignore) copied to /app.
+
+ii) Size 17.5MB — so the contents of your current directory are ~17.5MB.
+
+---
+
+🔹 Layer 2
+
+f9fbbc2013b5   30 seconds ago   /bin/sh -c apt install -y curl   15.7MB
+
+🔍 Command: RUN apt install -y curl
+
+💡 Explanation:
+
+i) Installed the curl package.
+
+ii) It added 15.7MB to the image — package binaries, dependencies.
+
+---
+
+🔹 Layer 3
+
+b1ec69c6f826   50 seconds ago   /bin/sh -c apt update            54.9MB
+
+🔍 Command: RUN apt update
+
+💡 Explanation:
+
+i) Updated package cache metadata (/var/lib/apt/lists).
+
+ii) Important: This is a wasteful layer if not combined with the install. You'll often see this optimized as:
+
+RUN apt update && apt install -y curl && rm -rf /var/lib/apt/lists/*
+
+Which merges layers and reduces image size.
+
+---
+
+🔹 Layer 4 and Below — Base Ubuntu image
+
+These are all part of the base image (ubuntu). These layers come from the official Ubuntu base image you pulled from Docker Hub.
+
+edbfe74c41f8   14 months ago    /bin/sh -c #(nop)  CMD ["/bin/bash"]   0B
+
+* Default command for ubuntu image: starts bash if not overridden.
+
+<missing>      14 months ago    /bin/sh -c #(nop) ADD file:...         78MB
+
+* This layer adds the actual Ubuntu root filesystem (ADD file:...)
+
+* It’s the core of the Ubuntu image (~78MB).
+
+<missing>      ... LABEL ..., ARG ...     0B
+
+* Metadata like:
+
+Maintainer info, Build architecture, Release version
+
+These don’t add to image size but are useful for documentation or CI pipelines.
+
+---
+📌 Why do some IMAGE IDs show <missing>?
+
+These layers are from the base image (Ubuntu), and your system doesn't have the original intermediate image IDs (often because they are not tagged). 
+
+They're still there but marked as <missing> in history.
+
+| Insight                   | Explanation                                            |
+| ------------------------- | ------------------------------------------------------ |
+| Image has **6 layers**    | 3 from your Dockerfile + 3 (or more) from base image   |
+| COPY added 17.5MB         | Your source code/app files total 17.5MB                |
+| `apt update` added 54.9MB | Consider combining it with `apt install` to save space |
+| Total image size          | Roughly ~160MB (78 + 54.9 + 15.7 + 17.5)               |

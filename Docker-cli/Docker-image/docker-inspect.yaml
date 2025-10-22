@@ -1,0 +1,528 @@
+🧠 Docker image inspect
+
+The docker image inspect command shows detailed, low-level JSON metadata about a Docker image — including configuration, layers, creation time, size, environment variables, entrypoint, exposed ports, labels, and more.
+
+📘 Basic Example:
+
+docker image inspect app:v1
+
+~ ➜  docker images app:v1       
+REPOSITORY   TAG       IMAGE ID       CREATED          SIZE
+app          v1        8b331c1dc27d   12 minutes ago   166MB
+
+Outputs a huge JSON blob that looks like:
+
+[
+    {
+        "Id": "sha256:8b331c1dc27df907cc5a1eb24da79d5f5c827e5275b30de6ba57a7746711c161",
+        "RepoTags": [
+            "app:v1"
+        ],
+        "RepoDigests": [],
+        "Parent": "sha256:f9fbbc2013b5c7b11124529fabb86083cf23d7ac8f639459ff470a3ac49fd370",
+        "Comment": "",
+        "Created": "2025-10-04T05:51:40.475747297Z",
+        "Container": "",
+        "ContainerConfig": {
+            "Hostname": "",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "Cmd": [
+                "/bin/sh",
+                "-c",
+                "#(nop) COPY dir:0c9de0613baa19c7f16d08cf33939e0d08fc25a654501da84b4706b77aa16cac in /app "
+            ],
+            "Image": "sha256:f9fbbc2013b5c7b11124529fabb86083cf23d7ac8f639459ff470a3ac49fd370",
+            "Volumes": null,
+            "WorkingDir": "",
+            "Entrypoint": null,
+            "OnBuild": null,
+            "Labels": {
+                "org.opencontainers.image.ref.name": "ubuntu",
+                "org.opencontainers.image.version": "24.04"
+            }
+        },
+        "DockerVersion": "25.0.5",
+        "Author": "",
+        "Config": {
+            "Hostname": "",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "Cmd": [
+                "/bin/bash"
+            ],
+            "Image": "sha256:f9fbbc2013b5c7b11124529fabb86083cf23d7ac8f639459ff470a3ac49fd370",
+            "Volumes": null,
+            "WorkingDir": "",
+            "Entrypoint": null,
+            "OnBuild": null,
+            "Labels": {
+                "org.opencontainers.image.ref.name": "ubuntu",
+                "org.opencontainers.image.version": "24.04"
+            }
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 166003207,
+        "GraphDriver": {
+            "Data": {
+                "LowerDir": "/var/lib/docker/overlay2/caf60482a82477123463bbb1f8fee1ddf612d6a9557df2d54c546dc844c1f1b7/diff:/var/lib/docker/overlay2/d4aa7e84df9ca8b0ddafa562aca06d5cdc23c80617168ebc48956e9d871af476/diff:/var/lib/docker/overlay2/ef38af02b4cd07edb84a931b4d150b1d174b0b01e54f364c6b41d4b0226225f0/diff",
+                "MergedDir": "/var/lib/docker/overlay2/dc3dea5aa0e287a993d52eaae69683d94854117fa038f7db5543b081a4cfedf4/merged",
+                "UpperDir": "/var/lib/docker/overlay2/dc3dea5aa0e287a993d52eaae69683d94854117fa038f7db5543b081a4cfedf4/diff",
+                "WorkDir": "/var/lib/docker/overlay2/dc3dea5aa0e287a993d52eaae69683d94854117fa038f7db5543b081a4cfedf4/work"
+            },
+            "Name": "overlay2"
+        },
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:f36fd4bb7334b7ae3321e3229d103c4a3e7c10a263379cc6a058b977edfb46de",
+                "sha256:763d4f945917357c8974523c9495faf943828e13023e91dff6423022b5dd6702",
+                "sha256:eb122c7fb8af63dec829b7ba3b6f4af208fff9cb9dff12392b53932e70032c2c",
+                "sha256:c8a978d6221429cd2fa23ccc4f51067ef570f260b88a6865ee7a8fcfd481d6e2"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2025-10-04T05:51:40.821741525Z"
+        }
+    }
+]
+
+---
+parent vs container vs container config:
+
+| **Question**                                                      | **Explanation**                                                                                                                                                                                                  |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Why is the `Parent` of `app:v1` not equal to `alpine:latest`?** | • A Dockerfile starting with `FROM alpine:latest` uses Alpine as the **base image**, but that image is **not treated as the `Parent`** in the final metadata.                                                    |
+|                                                                   | • Docker builds the final image through **multiple steps**, such as `RUN`, `COPY`, `CMD`, etc.                                                                                                                   |
+|                                                                   | • Each step creates a **new image layer** on top of the previous one.                                                                                                                                            |
+|                                                                   | • The final image (e.g., `app:v1`) is built on top of the **last created layer**, not directly on `alpine:latest`.                                                                                               |
+|                                                                   | • Therefore, the `Parent` field refers to the **last layer ID**, not the base image ID.                                                                                                                          |
+|                                                                   | 📌 **Key Point**: `Parent` ≠ `FROM` image — it refers to the **previous image layer**, not the base image.                                                                                                       |
+|                                                                   | ✅ **Example**: `alpine:latest` has ID `sha256:91ef0a...`, but `app:v1` may show `Parent: sha256:95f6b0...` (from a `RUN apk add curl` step).       
+|
+| **What is this `"Container"` and `"ContainerConfig"`?**           | • Docker creates a **temporary container** for each build step (like `RUN`, `COPY`, `CMD`).                                                                                                                      |
+|                                                                   | • These containers are used to execute the build steps.                                                                                                                                                          |
+|                                                                   | • After the step completes, Docker **commits** the container's state as a new **image layer**.                                                                                                                   |
+|                                                                   | • The `Container` field records the **ID of the temporary container** used for that layer.                                                                                                                       |
+|                                                                   | • The `ContainerConfig` field stores the **configuration** of that container (env vars, command, working directory, etc.).                                                                                       |
+|                                                                   | • These fields are **only used internally** during the build process — they don’t affect `docker run`.                                                                                                           |
+|                                                                   | ✅ **Example**: `"Cmd": ["/bin/sh", "-c", "#(nop) CMD [\"sleep\", \"36000\"]"]` is stored in `ContainerConfig` to show what command created the layer.         
+|
+| **What happens behind the scenes?**                               | • Docker follows a **step-by-step process** when building images from a Dockerfile.                                                                                                                              |
+|                                                                   | • Steps performed for each instruction:<br>  1. Parse the instruction<br>  2. Create a temporary container from the current image<br>  3. Execute the instruction<br>  4. Commit the result as a new image layer |
+|                                                                   | • Docker records metadata for each layer:<br>  • Container ID<br>  • Parent image ID<br>  • Commands used<br>  • Container config                                                                                |
+|                                                                   | • Each new image layer is **built upon the previous one**, forming a chain of layers.                                                                                                                            |
+|                                                                   | ✅ **Analogy**: Like Git commits — each layer builds on the one before. The final image only knows its **immediate parent**, not the full history.                                                                |
+
+*** if we use docker commit of running container then details (parent, container and container config0) will be reflected with real values. 
+
+---------------------
+---------------------
+📁 /var/lib/docker/image – Overview
+---------------------
+---------------------
+
+✅ Purpose:
+
+The /var/lib/docker/image directory is where Docker stores metadata about images, not the images’ content itself.
+
+This is engine-level metadata, including:
+
+Image manifests
+
+Image configuration (e.g., CMD, ENV, entrypoint)
+
+Mappings of image IDs to layers
+
+History info (for docker history)
+
+References to content stored by the storage driver (like overlay2)
+
+---
+📂 Directory Structure (Common Layout)
+---
+
+/var/lib/docker/image/overlay2/
+├── imagedb/                             # Stores image configs and metadata
+│   ├── content/
+│   │   └── sha256/
+│   │       └── <image-config-digest>.json   # Raw image configuration (JSON)
+│   ├── metadata/
+│   │   └── <image-digest>.json              # Metadata linking image to layers
+│   └── repositories.json (legacy)           # Legacy image → layer mapping
+│
+├── layerdb/                             # Layer dependency and mapping data
+│   └── sha256/
+│       └── <layer-id>/
+│           ├── diff                        # Diff ID of the uncompressed layer
+│           ├── parent                      # Parent layer ID (if any)
+│           ├── size                        # Layer size in bytes
+│           ├── cache-id                    # Maps to /var/lib/docker/overlay2/<id>
+│           ├── tar-split.json.gz           # Optional optimized tar layer info
+│           └── ...
+│
+├── distribution/                       # Metadata related to registry content
+│   ├── diffid-by-digest/
+│   │   └── sha256:<digest>                # Maps registry digest → local diff ID
+│   │
+│   └── v2metadata-by-diffid/
+│       └── sha256:<diff-id>               # JSON metadata per layer from registry
+│
+└── repositories.json                    # Legacy image index (used less now)
+
+
+
+---
+🔍 Breakdown of Important Subdirectories
+---
+
+1️⃣ imagedb/ — The Image Database
+
+📌 Purpose:
+
+Stores Docker image configuration metadata — JSON blobs that describe the image's properties, Dockerfile instructions, environment, and layer relationships.
+
+It stores:
+
+Image IDs seen in docker images and docker image inspect
+
+Image history metadata (the docker history output maps here)
+
+📂 Key subfolders:
+
+| Subfolder          | Content & Role                                                                                                                                                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `content/sha256/`  | Stores JSON blobs of **image configurations** keyed by SHA256 hash. Each file contains: <br>• OS & architecture <br>• `Cmd`, `Entrypoint`, `Env`, `Labels` <br>• `history` of Dockerfile steps <br>• `rootfs.diff_ids` (which link to `layerdb`) |
+| `metadata/sha256/` | Internal Docker metadata about image configs — includes timestamps, references, and linkage for Docker’s bookkeeping. Not shown in CLI but used by Docker internally.                                                                            |
+
+2️⃣ layerdb/ — The Layer Database
+
+📌 Purpose:
+
+Tracks metadata for all filesystem layers in your local Docker engine — how they relate to one another, their diff IDs, and runtime mounts.
+
+This is where Docker maps rootfs layers that you see in docker image inspect.
+
+📂 Key subfolders/files:
+
+| Subfolder/File | Content & Role                                                                                                                                                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sha256/`      | One folder per layer (`sha256:<diffid>`). Contains: <br>• `diff` file: diff ID <br>• `cache-id` file: link to overlay2/aufs ID <br>• `parent` file: parent layer <br>• `size` file: layer size <br>• `committed` (if layer finalized) |
+| `diff/`        | Symlinks or references to actual diff content (uncompressed layer). Used by storage driver.                                                                                                                                           |
+| `mounts/`      | Active mount metadata (used when containers or images are running or being built).                                                                                                                                                    |
+
+3️⃣ distribution/ — Digest ↔ DiffID Mapping for Registry Operations
+
+📌 Purpose:
+
+Tracks mappings between registry digests (compressed layer hashes) and local diff IDs (uncompressed content). Critical for push/pull operations, deduplication, and content verification.
+
+📂 Key subfolders:
+
+| Subfolder               | Content & Role                                                                                                    |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `diffid-by-digest/`     | Maps registry **digest** (from Docker Hub or private registries) → local **diff ID** (used by Docker's `layerdb`) |
+| `v2metadata-by-diffid/` | Maps **local diff ID** → metadata used for pushing (mediaType, registry digest, source repository, etc)           |
+
+🔁 Example Mapping Flow:
+
+Registry Layer Digest (compressed) ─► diffid-by-digest ─► Local diff ID (uncompressed)
+Local diff ID ─► v2metadata-by-diffid ─► Registry + mediaType info (for push)
+
+
+4️⃣ repositories.json — Local Name/Tag Mapping
+
+📌 Purpose:
+Stores a mapping between human-friendly image names (tags) and internal image IDs (config blob hashes).
+
+This is what powers:
+
+docker images
+
+docker rmi image:tag
+
+docker inspect image:tag
+
+📄 Example:
+
+{
+  "Repositories": {
+    "ubuntu": {
+      "ubuntu:latest": "sha256:97bed23a34971024aa8...",
+      "ubuntu@sha256:66460d55...": "sha256:97bed23a34971024aa8..."
+    },
+    "app": {
+      "app:v1": "sha256:f5f729a837f4be57..."
+    }
+  }
+}
+
+| Entry                 | Meaning                                                                  |
+| --------------------- | ------------------------------------------------------------------------ |
+| `"ubuntu:latest"`     | Tag used locally — maps to image config ID                               |
+| `"ubuntu@sha256:...`" | Digest-based reference (immutable) — also maps to same image config      |
+| `"sha256:<hash>"`     | The actual **image config ID** stored in `imagedb/content/sha256/<hash>` |
+
+
+🔄 How They All Connect
+
+| Component         | Maps to / Used By                | Description / Role                                                      |
+| ----------------- | -------------------------------- | ----------------------------------------------------------------------- |
+| `docker image ID` | `imagedb/content/sha256/`        | Stores image config JSON (metadata, env, diff IDs, etc.)                |
+| `rootfs.diff_ids` | `layerdb/sha256/`                | Stores actual filesystem changes (layers), their parents, and cache IDs |
+| Registry digest   | `distribution/diffid-by-digest/` | Maps registry's compressed digest → local uncompressed diff ID          |
+| Diff ID           | `distribution/v2metadata-.../`   | Maps local layer → registry metadata (source, mediaType, etc.)          |
+| Image tag         | `repositories.json`              | Maps image name/tag/digest → image config ID (used in CLI)              |
+
+
+
+----------------------------
+----------------------------
+GRAPH DRIVER
+----------------------------
+----------------------------
+
+1️⃣ Union Filesystem (UnionFS) — The Foundational Concept
+
+What: A general filesystem concept that allows multiple directories or filesystems to be combined (stacked) and presented as one.
+
+Role: Enables layering of filesystems, supporting copy-on-write and union of different layers.
+
+Examples:
+
+i) AUFS (Advanced UnionFS)
+
+ii) OverlayFS (Linux kernel implementation)
+
+iii) Other union filesystems (UnionFS proper, MergerFS, etc.)
+
+---
+
+2️⃣ OverlayFS (Overlay Driver) — Kernel-Level Implementation
+
+What: A Linux kernel feature that implements a UnionFS-type filesystem.
+
+Role: Enables stacking multiple lower directories (layers) plus an upper writable layer, and merges them transparently.
+
+Significance:
+
+i) Provides the copy-on-write filesystem capabilities Docker needs to efficiently manage layered filesystems.
+
+ii) Overlay2 Docker storage driver uses OverlayFS.
+
+Note: OverlayFS is a type of UnionFS, but implemented inside the Linux kernel.
+
+---
+
+3️⃣ Storage Driver / Graph Driver — Docker’s Storage Abstraction
+
+What: Docker’s internal component that uses kernel features like OverlayFS (or AUFS, device mapper, etc.) to implement image and container filesystem layering.
+
+Role:
+
+i) Handles storing image layers and container writable layers.
+
+ii) Manages copy-on-write, layer merging, and layer reuse.
+
+Terminology:
+
+Graph Driver and Storage Driver terms are mostly interchangeable in Docker context.
+
+Example: Overlay2 storage/graph driver uses OverlayFS underneath.
+
+---
+
+4️⃣ Docker Image & Container Layering — Using the Storage/Graph Driver
+
+What: Docker builds images and containers using the storage/graph driver.
+
+Role:
+
+i) Layers in Docker images correspond to filesystem layers managed by storage/graph driver.
+
+ii) Containers get a writable upper layer on top of the image’s read-only layers.
+
+How it works:
+
+Image layers → stored as read-only layers (LowerDir)
+
+Container writable layer → UpperDir
+
+Combined into MergedDir exposed inside container.
+
+| Term             | Meaning Today                                 | Where You See It                |
+| ---------------- | --------------------------------------------- | ------------------------------- |
+| `GraphDriver`    | 🔸 Legacy name for Docker’s storage interface | `docker inspect` JSON field     |
+| `Storage Driver` | 🔹 Modern, correct term for that component    | Docs, tutorials, configuration  |
+| `overlay2`       | ✅ Actual driver in use                        | `docker info`, `docker inspect` |
+
+
+✅ 1. What is GraphDriver in Docker?
+
+In Docker, the GraphDriver is part of the Storage Driver system — it tells Docker how container layers are stored and managed on disk.
+
+When you run:
+
+docker image inspect <image-id>
+
+You get a JSON output that includes:
+
+"GraphDriver": {
+  "Name": "overlay2",
+  "Data": {
+    ...
+  }
+}
+
+
+Name: This is the Storage Driver used. Most modern systems use overlay2.
+
+Data: This gives low-level details about the image/container filesystem layers managed by the driver.
+
+---
+✅ 2. What is overlay2? (Theory + Visual Explanation)
+
+overlay2 is Docker's default storage driver on most Linux distributions.
+
+Think of overlay2 like a layered cake 🍰:
+
+Each Docker image has multiple read-only layers, and when you run a container, Docker adds a read-write layer on top. overlay2 is responsible for stacking these layers efficiently using the Linux overlayfs filesystem.
+
+Here’s a simplified view:
+
+Container Filesystem
+┌──────────────┐
+│ RW Layer     │  <-- UpperDir
+├──────────────┤
+│ Image Layer3 │
+├──────────────┤
+│ Image Layer2 │
+├──────────────┤
+│ Image Layer1 │
+└──────────────┘  <-- LowerDir
+
+---
+✅ 3. Explanation of Each Field in GraphDriver.Data
+
+Here’s your sample:
+
+"GraphDriver": {
+    "Data": {
+        "LowerDir": ".../diff:.../diff:.../diff",
+        "MergedDir": ".../merged",
+        "UpperDir": ".../diff",
+        "WorkDir": ".../work"
+    }
+}
+
+---
+
+🔹 LowerDir
+
+Contains read-only layers of the Docker image.
+
+It’s a colon-separated list of directories — each represents a layer.
+
+These are shared across containers created from the same image.
+
+🔍 Example:
+
+LowerDir=/var/lib/docker/overlay2/layer1/diff:/layer2/diff:/layer3/diff
+
+This is like the “history” of the image — base layers.
+
+---
+🔹 UpperDir
+
+This is the read-write layer for the current container.
+
+Any file modifications, additions, or deletions go here.
+
+🔍 Example:
+
+UpperDir=/var/lib/docker/overlay2/container-layer-id/diff
+
+Only this container can access or write here.
+
+---
+🔸 WorkDir
+
+A working directory used internally by the overlay filesystem to manage operations (e.g., copying files during writes).
+
+It’s required for overlay2 to function but not something you directly interact with.
+
+🧠 Think of it as a temporary workspace used by the kernel when managing writes to UpperDir.
+
+---
+🔸 MergedDir
+
+This is the final mount point where all the layers (Lower + Upper) are combined.
+
+When you docker exec into a container, you are inside this merged view.
+
+✅ Example:
+
+If a file exists in a lower layer and you modify it, the updated copy appears in MergedDir via UpperDir.
+
+| Path        | Purpose                        | What's Inside?                              |
+| ----------- | ------------------------------ | ------------------------------------------- |
+| `LowerDir`  | Read-only image layers         | Files and dirs from base image and parents  |
+| `UpperDir`  | Writable container layer       | Changes made by the container               |
+| `MergedDir` | Final merged view (read/write) | What you "see" inside the running container |
+| `WorkDir`   | Internal kernel space          | Used by overlay2 during copy-on-write ops   |
+
+
+---
+step by step process
+
+Here’s a refined version of your “What happens during docker run” sequence, with small expansions:
+
+1) The Docker daemon verifies the image (if not present locally, pulls it).
+
+2) A new container is created: a new writable layer (upperdir) is allocated for the container.
+
+3) Docker identifies the image’s existing read‑only layers (these become one or more lowerdir entries).
+
+4) Docker (via the overlay2 storage driver) sets up a workdir for internal overlayfs operations.
+
+5) The kernel’s OverlayFS mounts a union filesystem combining:
+
+i) The lowerdir (one or more image layers, read‑only)
+
+ii) The upperdir (container’s writable layer)
+
+iii) And uses the workdir for the overlay mount’s internal needs
+The mount point is the merged directory, which becomes the container’s root filesystem (/).
+
+6) The container process starts and sees the merged view as its filesystem root.
+
+7) During container execution:
+
+i) Reads: If file exists in upperdir → use it; else → search lowerdir.
+
+ii) Writes/Modifications: If modifying a file existing in lowerdir, then the file is first “copied up” into upperdir (copy‑on‑write) and then modifications occur there.
+
+iii) Deletes: Deletions from the container result in whiteout files/opaque directories in upperdir which hide the original file/directory in the lowerdir.
+
+iv) Upperdir continues to accumulate changes for that container; the lowerdir remains unchanged (shared among containers/images).
+
+8) When the container stops and is removed, its writable layer (upperdir) is removed; underlying image layers remain.

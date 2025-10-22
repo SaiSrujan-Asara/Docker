@@ -1,0 +1,344 @@
+Difference between Binaries, Dependencies, Config files and Artifacts.
+
+---
+
+🧱 1. Binaries
+
+What they are:
+Compiled programs — the actual software that runs.
+
+Think of it as:
+The main executable file.
+
+Example:
+
+nginx → the binary that runs the Nginx web server
+
+python → the Python interpreter binary
+
+In Linux, binaries are often in /usr/bin/, /bin/, or /usr/local/bin/.
+
+
+---
+
+📦 2. Dependencies
+
+What they are:
+
+Other programs, libraries, or tools that the binary needs in order to run.
+
+Think of it as:
+
+The supporting cast.
+
+Example:
+
+Python binary might depend on shared libraries like libc, libssl, etc.
+
+A Node.js app may depend on npm packages like express, dotenv, etc.
+
+Dependencies can be:
+
+System-level libraries (e.g., .so files in Linux)
+
+Application-level packages (e.g., Python modules, Node packages)
+
+---
+
+⚙️ 3. Config Files
+
+What they are:
+Files that tell the binary how to behave — settings, environment, paths, ports, etc.
+
+Think of it as:
+The instructions or preferences.
+
+Example:
+
+nginx.conf → tells Nginx which port to listen on, where to find files
+
+.env → tells your app the database URL or secret keys
+
+settings.py in a Django app
+
+---
+
+🔁 How They Work Together
+
+Let’s take an example:
+
+You want to run a Python web app using Django.
+
+🧱 Binary: python
+
+📦 Dependencies: Django, gunicorn, psycopg2 (Postgres library), etc.
+
+⚙️ Config Files: .env (for environment variables), settings.py, maybe gunicorn.conf.py
+
+
+| Term            | What It Is                        | Example                                    |
+| --------------- | --------------------------------- | ------------------------------------------ |
+| **Binary**      | A compiled program                | `python`, `myapp`, `nginx`                 |
+| **Dependency**  | Something the binary needs to run | Libraries like `libssl`, `express`         |
+| **Config File** | Settings or preferences           | `nginx.conf`, `.env`, `settings.py`        |
+| **Artifact**    | Final product/output of a build   | Compiled binary, Docker image, `.jar` file |
+
+
+---
+
+📦 What Are Artifacts?
+
+An artifact is a file or bundle of files produced as a result of building software.
+
+✅ Think of artifacts as the output of a build process — something that's ready to be used, deployed, or stored.
+
+All binaries are artifacts, but not all artifacts are binaries.
+
+---
+
+🔍 Difference Between Binaries and Artifacts
+
+| **Aspect**      | **Binary**                                  | **Artifact**                                       |
+| --------------- | ------------------------------------------- | -------------------------------------------------- |
+| **What is it?** | A **compiled executable file** or program   | **Any output** of the build process                |
+| **Type**        | One specific kind of artifact               | A **broader category** (may include binaries)      |
+| **Examples**    | `python`, `nginx`, `myapp.exe`, `main.o`    | `myapp.exe`, `bundle.js`, `docs.zip`, Docker image |
+| **Purpose**     | Meant to be **executed** (run as a program) | Meant to be **used, stored, or deployed**          |
+| **Scope**       | Narrow (just the executable)                | Wide (can include binaries, logs, docs, images)    |
+
+🧠 Think of it like:
+
+A binary is a specific product — e.g., the .exe, .bin, or compiled file you can run.
+
+An artifact is any result of building your software — that could include:
+
+i) The binary itself ✅
+
+ii) Docker image ✅
+
+iii) Log files ✅
+
+iv) Test reports ✅
+
+v) Compiled front-end assets ✅
+
+---
+
+🔧 In Software Development:
+
+Artifacts can include:
+
+Compiled binaries (e.g., .exe, .jar, .pyc)
+
+Docker images (yes! Docker images themselves are artifacts)
+
+Packages (e.g., .deb, .rpm, .whl, .tar.gz)
+
+Minified front-end files (e.g., bundle.js)
+
+Zipped source code
+
+Documentation generated from code
+
+---
+
+🐳 In Docker Context:
+
+When working with Docker:
+
+Your Docker image is a common artifact.
+
+If you’re using a CI/CD tool (like GitHub Actions, GitLab CI, Jenkins), you might build:
+
+✅ A Docker image → artifact
+
+✅ A compiled binary → artifact
+
+✅ Logs or test reports → sometimes treated as artifacts
+
+---
+
+⚙️ In CI/CD Pipelines:
+
+In CI/CD (Continuous Integration/Deployment), the process usually looks like this:
+
+Source Code → Build → Artifact → Test → Deploy
+
+Example:
+
+You build a Go application → it produces a binary myapp
+
+That myapp binary is an artifact
+
+The CI server stores that binary
+
+Later steps might:
+
+Run tests on it
+
+Package it in a Docker image
+
+Deploy it to a server
+
+-------------------------------
+-------------------------------
+🧾 Comprehensive List of Common Artifact Types
+-------------------------------
+-------------------------------
+
+🧱 1. Binaries / Executables
+
+These are compiled programs that you can directly run.
+
+i) .exe (Windows executable)
+
+ii) .bin or ELF binaries (Linux executables)
+
+iii) .app (macOS applications)
+
+iv) .dll, .so, .dylib (shared libraries)
+
+v) .o, .a (object and archive files)
+
+vi) main, myapp, etc. (unnamed compiled Go/C/C++ binaries)
+
+---
+
+📦 2. Packages / Libraries
+
+Distributable code libraries or modules
+
+i) Python: .whl, .egg, .tar.gz
+
+ii) Node.js: node_modules/ contents, or .tgz npm package files
+
+iii) Java: .jar, .war, .ear
+
+iv) .NET: .nupkg
+
+v) Ruby: .gem
+
+vi) C/C++: .a, .lib, .so, .dll
+
+vii) Rust: .rlib, crate package
+
+---
+
+🐳 3. Containers / Images
+
+Self-contained environments with everything needed to run an app
+
+i) Docker image (.tar, image ID)
+
+ii) OCI image formats (Open Container Initiative)
+
+iii) Podman image
+
+iv) Singularity container image
+
+---
+
+🌐 4. Frontend Build Artifacts
+
+Output from frontend build tools like Webpack, Vite, etc.
+
+i) Minified JavaScript: bundle.js, main.min.js
+
+ii) CSS: main.css, style.min.css
+
+iii) Static assets: fonts, icons, images
+
+iv) HTML: index.html (after templating)
+
+v) .map files (source maps)
+
+---
+
+📂 5. Archives and Bundles
+
+Packaged collections of files (for deployment, distribution, or backup)
+
+i) .zip, .tar.gz, .7z (compressed files)
+
+ii) App installers or setup files: setup.exe, install.pkg
+
+iii) Custom bundle formats (e.g., Unity .unitypackage)
+
+---
+
+🧪 6. Test & Analysis Artifacts
+
+Files created during testing, linting, code coverage
+
+i) Test result reports: .xml, .json, .html (e.g., JUnit, Mocha)
+
+ii) Code coverage reports: coverage.xml, lcov.info
+
+iii) Linting reports: ESLint, Flake8, etc.
+
+---
+
+📜 7. Logs and Metadata
+
+Supporting outputs from builds, tests, or deployments
+
+i) Build logs (build.log)
+
+ii) CI/CD metadata (artifacts.json, .ci-info)
+
+iii) Changelogs
+
+iv) Version files
+
+---
+
+📖 8. Documentation
+
+Generated documentation (often from comments or markdown)
+
+ii) docs/ folders with HTML
+
+iii) Swagger/OpenAPI specs (swagger.json, openapi.yaml)
+
+iv) Javadoc (index.html)
+
+v) Sphinx-generated docs (Python)
+
+---
+
+📱 9. Mobile Artifacts
+
+Built apps for mobile platforms
+
+i) Android: .apk, .aab
+
+ii) iOS: .ipa, .app
+
+---
+
+🎮 10. Game Engine Artifacts
+
+Exported game builds or assets
+
+i) Unity: .apk, .exe, .unitypackage
+
+ii) Unreal Engine: .pak, executable builds
+
+iii) Godot: .pck, .exe
+
+---
+🖥️ 11. Infrastructure / DevOps Artifacts
+
+Generated for IaC (Infrastructure as Code) or deployment
+
+i) Terraform: .tfstate files, plan files (.tfplan)
+
+ii) Kubernetes: compiled YAML manifests
+
+iii) Helm Charts: .tgz
+
+iv) CloudFormation templates: .json, .yaml
+
+v) Ansible roles or playbooks
+
+
