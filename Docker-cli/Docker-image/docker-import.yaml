@@ -211,3 +211,20 @@ c1           latest       a44e727bd8f0   34 minutes ago   8.32MB
 alpine       latest       706db57fb206   2 weeks ago      8.32MB
 
 ---
+
+
+
+
+
+
+
+
+
+
+| Method               | Syntax Example                                               | Use Case                         |
+| -------------------- | ------------------------------------------------------------ | -------------------------------- |
+| 🗃️ Local File       | `docker image import file.tar myimage`                       | Most common; import from archive |
+| 📥 STDIN             | `cat file.tar \| docker image import - myimage`              | Scripting, piping from files     |
+| 🌐 Remote URL        | `docker image import https://site.com/fs.tar myimage`        | Import image data from web       |
+| 🗜️ Compressed Input | `gunzip -c file.tar.gz \| docker image import - myimage`     | Use compressed archive directly  |
+| 🔁 Export → Import   | `docker export mycontainer \| docker image import - myimage` | Turn a container into an image   |
