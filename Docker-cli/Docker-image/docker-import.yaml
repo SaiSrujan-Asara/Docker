@@ -15,6 +15,19 @@ Docker Documentation
 
 This means that Docker doesn't require the tarball to be exported from a container. It can be any tarball that represents a valid Linux root filesystem."
 
+If you import a Docker image that contains only the filesystem (fs) and do not specify a default CMD or ENTRYPOINT, then:
+
+Running a container without explicitly providing a command will fail.
+
+Docker has no instruction on what process to start inside the container.
+
+As a result, the container will not run, and you will see an error like:
+
+docker: Error response from daemon: No command specified
+
+In short:
+Without CMD or ENTRYPOINT, the container has no default process to execute, so it won’t start. (and also there should be req binaries need to present in that image to execute commands)
+
 ---
 
 2️⃣ Syntax and Basic Usage
@@ -39,6 +52,15 @@ i) It imports the contents of a tarball (containing a filesystem snapshot) and t
 ii) The resulting image contains the files inside the tarball as its root filesystem.
 
 iii) You can then run containers from this image.
+
+| Method               | Syntax Example                                               | Use Case                         |
+| -------------------- | ------------------------------------------------------------ | -------------------------------- |
+| 🗃️ Local File       | `docker image import file.tar myimage`                       | Most common; import from archive |
+| 📥 STDIN             | `cat file.tar \| docker image import - myimage`              | Scripting, piping from files     |
+| 🌐 Remote URL        | `docker image import https://site.com/fs.tar myimage`        | Import image data from web       |
+| 🗜️ Compressed Input | `gunzip -c file.tar.gz \| docker image import - myimage`     | Use compressed archive directly  |
+| 🔁 Export → Import   | `docker export mycontainer \| docker image import - myimage` | Turn a container into an image   |
+
 
 ---
 4️⃣ Examples
@@ -210,21 +232,256 @@ img          v1           33ced75b5f21   15 minutes ago   8.32MB
 c1           latest       a44e727bd8f0   34 minutes ago   8.32MB
 alpine       latest       706db57fb206   2 weeks ago      8.32MB
 
+---------------------
+Example-4 Compressed Input (.tar.gz Import)
+---------------------
+
+# 1️⃣ Create rootfs folder
+mkdir rich
+cd rich
+mkdir -p bin etc home
+cd ..
+
+# 2️⃣ Archive it
+tar -czf rich.tar.gz -C rich .
+
+# 3️⃣ Import into Docker
+gunzip -c rich.tar.gz | docker image import - gzip:latest
+
+# 4️⃣ Verify
+~ ➜  docker images        
+REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
+gzip         latest    92034e24db4e   3 seconds ago   0B
+
+~ ➜  docker image history gzip 
+IMAGE          CREATED         CREATED BY   SIZE      COMMENT
+92034e24db4e   6 minutes ago                0B        Imported from -
+
+-----------------------
+Example-5 Import from a local directory
+----------------------
+
+# 1️⃣ Create Docker image directly from current directory
+sudo tar -c . | docker import - exampleimagedir
+sha256:4dac2c42d8492976b6af2db1dd38441521844d8c6f2701df308dd80d6bd8e50f
+
+# 2️⃣ Verify image creation
+docker images
+REPOSITORY        TAG       IMAGE ID       CREATED          SIZE
+exampleimagedir   latest    4dac2c42d849   4 seconds ago    17.3MB
+gzip              latest    92034e24db4e   12 minutes ago   0B
+
+# 3️⃣ Check image history
+docker image history exampleimagedir
+IMAGE          CREATED          CREATED BY   SIZE      COMMENT
+4dac2c42d849   55 seconds ago                17.3MB    Imported from -
+
+---
+Full Command Breakdown Table
 ---
 
+| Component         | Description                                                              | Example                               |              |
+| ----------------- | ------------------------------------------------------------------------ | ------------------------------------- | ------------ |
+| `sudo`            | Run with admin privileges (needed if you’re reading files owned by root) | `sudo tar ...`                        |              |
+| `tar -c .`        | Create a tar archive of the current directory                            | Includes all subdirectories and files |              |
+| `                 | `                                                                        | Pipe output to next command           | Streams data |
+| `docker import -` | Import tar data from standard input                                      | Reads filesystem from the tar stream  |              |
+| `exampleimagedir` | Name of the Docker image to create                                       | Results in `exampleimagedir:latest`   |              |
+
+---------------------
+---------------------
+🚀 The -c or --change flag in docker import
+---------------------
+---------------------
+
+The -c or --change flag in docker import is very powerful because it lets you add or override Docker image configuration while importing an image.
+
+This means you can inject Dockerfile-like instructions (metadata) into your imported image without needing a Dockerfile or a rebuild.
+
+These flags allow you to specify image configuration changes when importing a tarball or stream.
+
+Similar to Dockerfile instructions, you can add commands like:
+
+| Instruction  | Description                                  |
+| ------------ | -------------------------------------------- |
+| `CMD`        | Default command to run when container starts |
+| `ENTRYPOINT` | Entry point executable for container         |
+| `ENV`        | Environment variables (e.g. `ENV VAR=value`) |
+| `LABEL`      | Metadata labels                              |
+| `EXPOSE`     | Ports exposed by the container               |
+| `USER`       | User to run the container as                 |
+| `WORKDIR`    | Default working directory                    |
+| `VOLUME`     | Volumes to mount                             |
+
+
+---
+🔥 Why is this useful?
+
+When you use docker import, Docker just imports the filesystem contents, but loses all metadata like default command, environment variables, working directory, etc.
+
+Using -c lets you set those missing configurations immediately during import
+
+---
+⚙️ How Docker stores these changes
+
+These instructions are stored as image metadata.
+
+When running a container from this image, Docker uses these configs unless overridden.
+
+-------
+-------
+Example 1 Basic (if image is based out of local directory without full blown fs)
+-------
+-------
+
+🐳 Build Minimal Docker Image with /bin/bash (musl libc)
+
+1️⃣ Check /bin/bash dependencies with ldd
+
+~ ➜ ldd /bin/bash
+        /lib/ld-musl-x86_64.so.1 (0x7f51dffeb000)
+        libreadline.so.8 => /usr/lib/libreadline.so.8 (0x7f51dfeda000)
+        libc.musl-x86_64.so.1 => /lib/ld-musl-x86_64.so.1 (0x7f51dffeb000)
+        libncursesw.so.6 => /usr/lib/libncursesw.so.6 (0x7f51dfe86000)
+
+
+Your system uses musl libc, so you must copy these libs alongside bash.
+
+2️⃣ Prepare rich directory structure
+
+~ ➜ mkdir -p rich/lib rich/usr/lib rich/bin
+
+~ ➜ ls rich
+bin  lib  usr
+
+3️⃣ Copy /bin/bash and its dependencies
+~ ➜ cp /bin/bash rich/bin/
+~ ➜ cp /lib/ld-musl-x86_64.so.1 rich/lib/
+~ ➜ cp /usr/lib/libreadline.so.8 rich/usr/lib/
+~ ➜ cp /usr/lib/libncursesw.so.6 rich/usr/lib/
+
+4️⃣ Create tarball from rich
+~ ➜ tar -cf richfs.tar -C rich .
+
+5️⃣ Import tarball as Docker image with default CMD set to bash
+~ ➜ cat richfs.tar | docker import --change 'CMD ["/bin/bash"]' - rich:v2
+sha256:5f395afbd37dcbced2299101d9c4d38ab34703a6ca91d9e9ce23c5adc973dcc5
+
+6️⃣ Run container with bash shell — it works!
+~ ➜ docker run -it --rm rich:v2
+
+bash-5.2# ^C
+bash-5.2# exit
+exit
+
+7️⃣ Try running container with sh → fails
+~ ➜ docker container run -it --name c1 rich:v2 sh
+docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: exec: "sh": executable file not found in $PATH: unknown.
+ERRO[0001] error waiting for container: context canceled
+
+No /bin/sh or equivalent exists in the image → sh command fails.
+
+8️⃣ Run container with default CMD (/bin/bash) → works fine
+~ ➜ docker container run -it --name c2 rich:v2
+bash-5.2# exit
+exit
+
+9️⃣ Run container explicitly with bash → works fine (after removing old container)
+~ ➜ docker container run -it --name c7 rich:v2 bash
+bash-5.2#
+
+
+-------
+-------
+Example 2  (if image is based out of full blown fs)
+-------
+-------
+
+cat rootfs.tar | docker import \
+  -c "ENV APP_VERSION=1.0" \
+  -c "WORKDIR /app" \
+  -c "CMD [\"python3\", \"main.py\"]" \
+  -c "EXPOSE 5000" \
+  myapp:latest
+
+| Option                       | Effect                                                       |
+| ---------------------------- | ------------------------------------------------------------ |
+| `ENV APP_VERSION=1.0`        | Sets environment variable `APP_VERSION` inside the container |
+| `WORKDIR /app`               | Sets `/app` as working directory when the container starts   |
+| `CMD ["python3", "main.py"]` | Default command to run when container starts                 |
+| `EXPOSE 5000`                | Documents that the container listens on port `5000`          |
+
+
+----------------------------
+📢 What is --message in docker import?
+----------------------------
+
+The --message (or -m) flag lets you add a commit message to the imported image.
+
+This is similar to the commit message when you do docker commit.
+
+It’s metadata to describe why or what you imported.
+
+Useful for documentation and tracking image history.
+
+---
+🧩 Syntax
+---
+
+docker import --message "Your commit message here" <tarball-or-stdin> <image_name>
+
+---
+🔍 What happens internally?
+---
+
+The message is stored in the image’s history metadata.
+
+When you inspect the image, you can see this message as part of the image’s layers history.
+
+Helps maintainers or team members understand the image origin or changes.
+
+---
+🧩 Example 1
+---
+
+~ ➜  ls
+rich        richfs.tar
+
+# 1️⃣ Import tarball as Docker image with a message
+cat richfs.tar | docker image import -m "Initial import of richfs from backup" - rich:v1
+# Output: sha256:c13ba1f312dc8cef326f879fb004f43144f5b7f3aa6333512698eaf2d58e8ef4
+
+# 2️⃣ Verify imported images
+docker images
+# Output:
+# REPOSITORY   TAG       IMAGE ID       CREATED          SIZE
+# rich         v1        c13ba1f312dc   5 seconds ago    2MB
+# rich         v2        5f395afbd37d   25 minutes ago   2MB
+
+# 3️⃣ Check image history and metadata
+docker image history rich:v1
+# Output:
+# IMAGE          CREATED          CREATED BY   SIZE      COMMENT
+# c13ba1f312dc   21 seconds ago                2MB       Initial import of richfs from backup
+
+---
+🧩 Example 2
+---
+
+You can combine --message with --change flags:
+
+cat rootfs.tar | docker import \
+  -m "Imported minimal rootfs" \
+  -c "CMD [\"/bin/bash\"]" \
+  myimage:latest
+
+---
+🧩 Summary Table
+
+| Flag             | Purpose                              | Example                                                   |
+| ---------------- | ------------------------------------ | --------------------------------------------------------- |
+| `--message`/`-m` | Add commit message metadata          | `docker import -m "My commit" rootfs.tar myimage`         |
+| `--change`/`-c`  | Change image config (CMD, ENV, etc.) | `docker import -c "CMD ['/bin/bash']" rootfs.tar myimage` |
 
 
 
-
-
-
-
-
-
-| Method               | Syntax Example                                               | Use Case                         |
-| -------------------- | ------------------------------------------------------------ | -------------------------------- |
-| 🗃️ Local File       | `docker image import file.tar myimage`                       | Most common; import from archive |
-| 📥 STDIN             | `cat file.tar \| docker image import - myimage`              | Scripting, piping from files     |
-| 🌐 Remote URL        | `docker image import https://site.com/fs.tar myimage`        | Import image data from web       |
-| 🗜️ Compressed Input | `gunzip -c file.tar.gz \| docker image import - myimage`     | Use compressed archive directly  |
-| 🔁 Export → Import   | `docker export mycontainer \| docker image import - myimage` | Turn a container into an image   |
