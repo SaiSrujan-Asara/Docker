@@ -70,6 +70,21 @@ Works perfectly fine in most cases.
 Useful in scripts or when chaining commands. ("docker save ubuntu:latest > ubuntu.tar")
 
 ---
+break down of output with >
+---
+docker save myimage > image.tar (Output redirection)
+
+Step 1: The docker save myimage command starts executing.
+
+Step 2: Docker serializes the image myimage as a tar archive and writes it to stdout (standard output stream).
+
+Step 3: The shell sees the > image.tar and redirects the stdout of the command to the file image.tar.
+
+Step 4: The shell writes the tar archive content coming from Docker’s stdout into the file image.tar.
+
+Step 5: When the process finishes, image.tar contains the full Docker image archive.
+
+---
 🔄 Are these two equivalent?
 ---
 
