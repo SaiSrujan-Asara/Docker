@@ -1,0 +1,281 @@
+🚢 What is docker image save?
+---
+
+i) docker image save creates a tarball archive of one or more Docker images.
+
+ii) It exports images (including all layers, metadata) so they can be stored, transferred, or backed up.
+
+iii) This saved tar file can be used later with docker image load to restore the image.
+
+---
+🧩 Basic Syntax
+---
+
+docker image save [OPTIONS] IMAGE [IMAGE...]
+
+---
+📚 What happens?
+---
+
+i) Docker bundles all layers and metadata for the specified image(s).
+
+ii) Creates a tar archive (by default streamed to stdout or saved to a file).
+
+iii) This archive is portable — you can move it between machines or environments
+
+---
+⚠️ Best Practices
+---
+
+i) Use docker save before removing important images.
+
+ii) Compress saved files to save disk space.
+
+iii) Use meaningful filenames and tags.
+
+iv) Save multiple images together for bundled transfers.
+
+----------------------------------------
+🔍 Difference Between -o and > in docker save
+----------------------------------------
+
+| Method                | Description                                                                                         | Example                                   |
+| --------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Using `-o` option     | Saves the image tarball **directly to a file** specified by `-o` flag.                              | `docker save -o ubuntu.tar ubuntu:latest` |
+| Using `>` redirection | Saves the image tarball to **standard output** (stdout), and shell redirects that output to a file. | `docker save ubuntu:latest > ubuntu.tar`  |
+
+
+---
+📌 Details:
+---
+
+1. -o option (preferred method):
+
+The Docker CLI handles the file write internally.
+
+You give the exact filename, and Docker writes the archive directly.
+
+More explicit and clearer in intent.
+
+Portable across different shells and platforms. ("docker save -o ubuntu.tar ubuntu:latest")
+
+2. Using > shell redirection:
+
+docker save writes the tar archive to stdout by default (if no -o specified).
+
+The shell (bash, zsh, etc.) redirects that output stream into the file.
+
+Works perfectly fine in most cases.
+
+Useful in scripts or when chaining commands. ("docker save ubuntu:latest > ubuntu.tar")
+
+---
+🔄 Are these two equivalent?
+---
+
+Yes, both produce the same result — a tar archive file named ubuntu.tar.
+
+---
+⚠️ Important notes:
+---
+
+If you use > but accidentally add spaces or quotes wrong, you might get unexpected results.
+
+Using -o is usually safer because Docker manages file writing.
+
+When you want to pipe output (e.g., compress on the fly), you cannot use -o. You have to rely on stdout + pipe + redirection.
+
+---
+Example compressing on the fly (needs stdout):
+---
+
+You cannot do this with -o because it saves directly to file, not stdout.
+
+docker save ubuntu:latest | gzip > ubuntu.tar.gz
+
+| Usage                     | Saves to file internally or stdout? | Can be piped?                     | Example                            |                     |
+| ------------------------- | ----------------------------------- | --------------------------------- | ---------------------------------- | ------------------- |
+| `docker save -o file.tar` | Docker writes file directly         | No                                | `docker save -o ubuntu.tar ubuntu` |                     |
+| `docker save > file.tar`  | Writes to stdout; shell redirects   | Yes                               | `docker save ubuntu > ubuntu.tar`  |                     |
+| `docker save              | gzip > file.tar.gz`                 | Writes to stdout; pipe + redirect | Yes                                | Compress on the fly |
+
+
+-----------
+Example-1
+-----------
+
+# 1️⃣ Check existing images
+docker images
+# Output:
+REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+alpine       latest    706db57fb206   2 weeks ago   8.32MB
+
+# 2️⃣ Save image to a tar file using -o option
+docker image save -o alpine_v1.tar alpine:latest
+
+# 3️⃣ Verify tar file creation
+ls
+# Output:
+alpine_v1.tar
+
+# 4️⃣ Save image to tar file using shell redirection
+docker image save alpine:latest > alpine_v2.tar
+
+# 5️⃣ Verify both tar files exist
+ls
+# Output:
+alpine_v1.tar  alpine_v2.tar
+
+--------------
+Example-2
+--------------
+
+# 1️⃣ Check existing images
+
+docker images
+REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
+alpine       latest    706db57fb206   2 weeks ago     8.32MB
+nginx        alpine    5e7abcdd2021   2 weeks ago     52.7MB
+busybox      latest    0ed463b26dae   13 months ago   4.43MB
+
+# 2️⃣ Save multiple images into a single tarball
+
+docker image save -o small_img.tar alpine:latest nginx:alpine busybox:latest
+
+# 3️⃣ Verify the tarball is created
+
+ls -lh small_img.tar
+-rw-------    1 root     root       56.1M Oct 23 17:45 small_img.tar
+
+# 4️⃣ Clean up all unused images to free space
+
+docker image prune -a
+WARNING! This will remove all images without at least one container associated to them.
+Are you sure you want to continue? [y/N] y
+Deleted Images:
+untagged: busybox:latest
+untagged: busybox@sha256:2f590fc602ce325cbff2ccfc39499014d039546dc400ef8bbf5c6ffb860632e7
+deleted: sha256:0ed463b26daee791b094dc3fff25edb3e79f153d37d274e5c2936923c38dac2b
+deleted: sha256:80e840de630d08a6a1e0ee30e7c8378cf1ed6a424315d7e437f54780aee6bf5a
+untagged: nginx:alpine
+untagged: nginx@sha256:61e01287e546aac28a3f56839c136b31f590273f3b41187a36f46f6a03bbfe22
+deleted: sha256:5e7abcdd20216bbeedf1369529564ffd60f830ed3540c477938ca580b645dff5
+deleted: sha256:6d3ae59953d08be74b44bad50ce0c5c15425f92c3f7b29a98b887e3c600e18ab
+deleted: sha256:4afd112e56c8a32a6ee0e7b7e4fcab7269f2a002c1bef9c166da68bda172e1d2
+deleted: sha256:57e2d4a5e41588b4484cecc824e5eb0f742065d8a430ede7ef5a3f66a046e179
+deleted: sha256:3d62358da0fe179ecd251483c69bdca9e78afad4050d53564f4e57271b5defc6
+deleted: sha256:c5860184f232a26f25e683d1ecc69d99122a703a955acfbb7828cb671f3d48a3
+deleted: sha256:ce2ece23f889e74c25fa39d662e2f86e79acd2254a1ee5c1c4b2edb98c15f37f
+deleted: sha256:eb589503a90fc5465ebd7edaf146b2a74b58a5b5e768a779cf713aea0a64a438
+untagged: alpine:latest
+untagged: alpine@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
+deleted: sha256:706db57fb2063f39f69632c5b5c9c439633fda35110e65587c5d85553fd1cc38
+
+Total reclaimed space: 48.85MB
+
+# 5️⃣ Load images back from the tarball
+
+docker load -i small_img.tar
+Loaded image: alpine:latest
+1967fccdbe5e: Loading layer [==================================================>]   4.59MB/4.59MB
+ed6be5e2fd33: Loading layer [==================================================>]  3.584kB/3.584kB
+abbef7f88314: Loading layer [==================================================>]  4.608kB/4.608kB
+3e4655a38876: Loading layer [==================================================>]   2.56kB/2.56kB
+dc45ec6c902b: Loading layer [==================================================>]   5.12kB/5.12kB
+1704c5a3d8da: Loading layer [==================================================>]  7.168kB/7.168kB
+e9a26559275d: Loading layer [==================================================>]  40.92MB/40.92MB
+Loaded image: nginx:alpine
+80e840de630d: Loading layer [==================================================>]  4.669MB/4.669MB
+Loaded image: busybox:latest
+
+# 6️⃣ Verify images are restored
+
+docker images
+REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
+alpine       latest    706db57fb206   2 weeks ago     8.32MB
+nginx        alpine    5e7abcdd2021   2 weeks ago     52.7MB
+busybox      latest    0ed463b26dae   13 months ago   4.43MB
+
+
+---------------
+Example-3 Save and Compress Docker Image on the Fly
+---------------
+
+Use docker save to export the image.
+
+Instead of saving the large tar file directly, pipe the output to a compression tool (like gzip) to reduce file size.
+
+Redirect compressed output to a .tar.gz (or .tgz) file.
+
+Here -o will not work
+
+---
+Why use this?
+---
+
+Saves disk space by compressing the image archive.
+
+Speeds up file transfers (smaller size).
+
+Useful in CI/CD pipelines, backups, or transferring over limited bandwidth.
+
+---
+Steps to Achive:
+---
+
+# 1️⃣ Pull the alpine image
+docker image pull alpine
+Using default tag: latest
+latest: Pulling from library/alpine
+2d35ebdb57d9: Already exists 
+Digest: sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
+Status: Downloaded newer image for alpine:latest
+docker.io/library/alpine:latest
+
+# 2️⃣ Check existing images
+docker images
+REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+alpine       latest    706db57fb206   2 weeks ago   8.32MB
+
+# 3️⃣ Save the alpine image compressed with gzip
+docker image save alpine:latest | gzip > alpine_v1.tar.gz
+
+# 4️⃣ Confirm the tarball exists
+ls
+alpine_v1.tar.gz
+
+# 5️⃣ Uncompress the tarball
+gunzip alpine_v1.tar.gz
+
+# 6️⃣ Confirm uncompressed tarball exists
+ls
+alpine_v1.tar
+
+# 7️⃣ Load the image back from tarball
+docker load -i alpine_v1.tar
+Loaded image: alpine:latest
+
+# 8️⃣ Verify image is loaded
+docker images
+REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+alpine       latest    706db57fb206   2 weeks ago   8.32MB
+
+# 9️⃣ Remove all unused images to free space
+docker image prune -a
+WARNING! This will remove all images without at least one container associated to them.
+Are you sure you want to continue? [y/N] y
+Deleted Images:
+untagged: alpine:latest
+untagged: alpine@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
+deleted: sha256:706db57fb2063f39f69632c5b5c9c439633fda35110e65587c5d85553fd1cc38
+
+Total reclaimed space: 0B
+
+# 🔟 Load image back after pruning
+docker load -i alpine_v1.tar
+Loaded image: alpine:latest
+
+# 1️⃣1️⃣ Verify image is restored
+docker images
+REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+alpine       latest    706db57fb206   2 weeks ago   8.32MB

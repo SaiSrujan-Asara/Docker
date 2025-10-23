@@ -8,6 +8,8 @@ ii) Unlike docker build, which builds an image from a Dockerfile, docker import 
 
 iii) Typically used to create images from filesystem snapshots or backups.
 
+iv) Docker image import does not support the -o (output) option.
+
 ***IMPORTANT NOTE***
 
 "According to the official Docker documentation, the docker image import command can import the contents from a tarball to create a filesystem image. The tarball can be an archive (.tar, .tar.gz, .tgz, .bzip, .tar.xz, or .txz) containing a filesystem or an individual file on the Docker host. If you specify an archive, Docker untars it in the container relative to the / (root). If you specify an individual file, you must specify the full path within the host. 
