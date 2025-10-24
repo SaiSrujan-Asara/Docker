@@ -1,0 +1,244 @@
+🐳 docker image ls
+
+The command docker image ls is used to list all Docker images stored locally on your system.
+
+It shows details like:
+
+Repository (image name)
+
+Tag (version or identifier)
+
+Image ID
+
+Created time
+
+Size
+
+This command helps you inspect, manage, and clean up your local image library.
+
+---
+🔹 2. Basic Syntax
+
+docker image ls [OPTIONS] [REPOSITORY[:TAG]]
+
+docker image ls = docker images (Both are exactly the same)
+
+---
+🔹 3. Basic Example
+
+docker image ls
+
+Output Example:
+
+REPOSITORY          TAG         IMAGE ID       CREATED          SIZE
+ubuntu              latest      7e0aa2d69a15   2 weeks ago      77MB
+nginx               1.25        d1a364dc548d   3 weeks ago      142MB
+mysql               8.0         9c4e55a1c4bb   4 weeks ago      524MB
+<none>              <none>      6f1a3f2d4c5e   1 month ago      120MB
+
+---
+🔹 4. Important Columns Explained
+
+| Column         | Description                                                                          |
+| -------------- | ------------------------------------------------------------------------------------ |
+| **REPOSITORY** | The name of the image (e.g., `nginx`, `ubuntu`).                                     |
+| **TAG**        | Version tag (e.g., `latest`, `1.25`, `8.0`). If not specified, defaults to `latest`. |
+| **IMAGE ID**   | Unique identifier (truncated SHA256 hash) of the image.                              |
+| **CREATED**    | How long ago the image was created.                                                  |
+| **SIZE**       | Total disk space used by the image.                                                  |
+
+---
+🔹 5. Commonly Used Options (Parameters)
+
+| Option               | Description                                                                 | Example                                                           |
+| -------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `-a`, `--all`        | Show **all images**, including **intermediate layers** (hidden by default). | `docker image ls -a`                                              |
+| `-q`, `--quiet`      | Show **only image IDs** (useful in scripts).                                | `docker image ls -q`                                              |
+| `-f`, `--filter`     | Filter output based on conditions.                                          | `docker image ls -f dangling=true`                                |
+| `--digests`          | Show **image digests** (SHA256 checksums).                                  | `docker image ls --digests`                                       |
+| `--format`           | Control the **output format** using Go templates.                           | `docker image ls --format "{{.Repository}}:{{.Tag}} - {{.Size}}"` |
+| `[REPOSITORY[:TAG]]` | List images for a specific repo/tag.                                        | `docker image ls nginx:latest`                                    |
+
+----------------
+🔹 6. Detailed Examples for Each Parameter
+----------------
+🧩 Example 1: List all images (including intermediate ones)
+
+docker image ls -a
+
+You’ll see images that were created during builds but not tagged (often <none>).
+
+Use case: Useful when cleaning up space and removing dangling images.
+
+---
+🧩 Example 2: Show only image IDs
+
+docker image ls -q
+
+Output:
+
+7e0aa2d69a15
+d1a364dc548d
+9c4e55a1c4bb
+6f1a3f2d4c5e
+
+Use case: Combine with other commands:
+
+docker rmi $(docker image ls -q)
+
+This removes all images at once.
+
+---
+🧩 Example 3: Filter images (with --filter)
+
+✅ Example: Show dangling images
+
+docker image ls -f dangling=true
+
+Shows untagged images (<none>) that are safe to delete.
+
+✅ Example: Show images from a specific repository
+
+docker image ls -f reference='nginx*'
+
+Lists all images whose repository starts with nginx.
+
+✅ Example: Show images created before a specific image
+
+docker image ls -f before=nginx:latest
+
+✅ Example: Show images created after a specific image
+
+docker image ls -f since=ubuntu:latest
+
+---
+🧩 Example 4: Show image digests
+
+docker image ls --digests
+
+This shows the SHA256 digest, which uniquely identifies the image content.
+
+---
+🧩 Example 5: Custom Output Formatting (--format)
+
+docker image ls --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+
+Output:
+
+REPOSITORY      TAG       SIZE
+nginx           latest    142MB
+ubuntu          latest    77MB
+
+You can also make custom formats, e.g.:
+
+docker image ls --format "{{.Repository}}:{{.Tag}} - {{.ID}} - {{.Size}}"
+
+---
+🧩 Example 6: Listing Images from a Specific Repository
+
+You can list images for a specific repository name directly.
+
+✅ Example: List all images in the java repository
+
+docker images java
+
+Output:
+
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+java                8                   308e519aac60        6 days ago          824.5 MB
+java                7                   493d82594c15        3 months ago        656.3 MB
+java                latest              2711b1d6f3aa        5 months ago        603.9 MB
+
+🔍 Key Points:
+
+i) The argument java is the repository name.
+
+ii) This will list all tags of the image java.
+
+iii) The [REPOSITORY[:TAG]] must be an exact match — it won’t match partial names.
+
+❌ Example: Partial Match Does NOT Work
+
+docker images jav
+
+Output:
+
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+
+(No results)
+
+🧠 Why?
+Because docker images jav looks exactly for a repository called jav, not any substring match.
+
+✅ Tip: For partial matches, use the filter option:
+
+docker image ls -f reference='jav*'
+
+This will match java, java8, javaproject, etc.
+
+---
+🧩 Example 7: Listing Images from a Specific Repository and Tag
+
+If both repository and tag are provided, Docker will only list images that match both values.
+
+✅ Example: List all java images with tag 8
+
+docker images java:8
+
+Output:
+
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+java                8                   308e519aac60        6 days ago          824.5 MB
+
+❌ Example: When No Match Found
+
+docker images java:0
+
+Output:
+
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+
+(Empty list — no such tag)
+
+---
+🧩 Example 8: Viewing Full-Length Image IDs (--no-trunc)
+
+By default, Docker shortens the IMAGE ID to the first 12 characters for readability.
+To display the complete SHA256 hash, use the --no-trunc flag.
+
+✅ Example: Show Full Image IDs
+docker images --no-trunc
+
+Output:
+
+REPOSITORY                    TAG                 IMAGE ID                                                                  CREATED             SIZE
+<none>                        <none>              sha256:77af4d6b9913e693e8d0b4b294fa62ade6054e6b2f1ffb617ac955dd63fb0182   19 hours ago        1.089 GB
+committest                    latest              sha256:b6fa739cedf5ea12a620a439402b6004d057da800f91c7524b5086a5e4749c9f   19 hours ago        1.089 GB
+<none>                        <none>              sha256:78a85c484f71509adeaace20e72e941f6bdd2b25b4c75da8693efd9f61a37921   19 hours ago        1.089 GB
+docker                        latest              sha256:30557a29d5abc51e5f1d5b472e79b7e296f595abcf19fe6b9199dbbc809c6ff4   20 hours ago        1.089 GB
+tryout                        latest              sha256:2629d1fa0b81b222fca63371ca16cbf6a0772d07759ff80e8d1369b926940074   23 hours ago        131.5 MB
+
+🧠 Why --no-trunc Matters
+
+Full IDs are necessary when scripting automation that relies on full image hashes.
+
+Helpful in debugging image corruption or verifying signatures.
+
+Essential when multiple images share the same first 12 characters (rare but possible).
+
+---
+🧩 Example 9: Combining Filters and Truncation
+
+You can combine multiple options to narrow down your search.
+
+✅ Example: Show full IDs for only java images
+
+docker images java --no-trunc
+
+✅ Example: Show only image IDs for a repository
+
+docker image ls -q java
+
+✅ Example: Show untagged images with full IDs
+
+docker image ls -a --filter dangling=true --no-trunc
