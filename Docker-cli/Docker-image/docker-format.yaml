@@ -1,0 +1,168 @@
+🔹 What It Is
+
+The --format flag allows you to customize how Docker displays command output.
+
+Instead of Docker showing large tabular or JSON outputs, --format gives you the power to:
+
+Display specific fields only
+
+Rearrange columns
+
+Add custom text or table headers
+
+Output machine-readable text for scripts
+
+It uses the Go template syntax (because Docker is written in Go).
+
+---
+⚙️ General Syntax
+---
+
+docker <command> --format "<Go-template>"
+
+docker ps --format "{{.ID}}: {{.Image}}"
+
+You can also use table formatting:
+
+docker ps --format "table {{.ID}}\t{{.Image}}\t{{.Status}}"
+
+| Concept              | Description                         | Example                                                      |
+| -------------------- | ----------------------------------- | ------------------------------------------------------------ |
+| `--format`           | Customize output using Go templates | `docker ps --format "{{.ID}}:{{.Names}}"`                    |
+| Template Engine      | Go `text/template`                  | Supports fields, logic, text                                 |
+| Human-readable       | Use `table` keyword                 | `"table {{.Repository}}\t{{.Size}}"`                         |
+| Machine-readable     | Raw key:value or JSON               | `'{"id":"{{.ID}}"}'`                                         |
+| Combine with Filters | Yes                                 | `docker images -f dangling=false --format "{{.Repository}}"` |
+
+---
+
+you can use Go’s built-in json function to print the entire object as JSON:
+
+🎯 This is the official and correct way to see all fields available for the template context.
+
+docker image ls --format '{{json .}}'
+
+Output:
+
+{"Repository":"nginx","Tag":"latest","ID":"a1b2c3d4e5f6","Digest":"<none>","CreatedSince":"3 days ago",
+"CreatedAt":"2025-10-23 14:34:11 +0000 UTC","Size":"142MB"}
+
+---
+🧱 The 7 Available Fields
+
+Here are all fields officially available to docker image ls --format (as of Docker 25.x+):
+
+| Field               | Description                       | Example Output                  |
+| ------------------- | --------------------------------- | ------------------------------- |
+| `{{.Repository}}`   | Name of the image repository      | `nginx`                         |
+| `{{.Tag}}`          | Image tag                         | `latest`                        |
+| `{{.ID}}`           | Short image ID (12 chars)         | `a1b2c3d4e5f6`                  |
+| `{{.Digest}}`       | SHA256 digest if present          | `sha256:abc123...`              |
+| `{{.CreatedSince}}` | Time since the image was created  | `3 days ago`                    |
+| `{{.CreatedAt}}`    | Exact timestamp of image creation | `2025-10-22 11:45:30 +0000 UTC` |
+| `{{.Size}}`         | Human-readable image size         | `142MB`                         |
+
+🧩 1️⃣ {{.Repository}}
+
+💡 Description:
+
+The repository name (a.k.a. image name without the tag).
+
+This comes from the first part of the image reference — e.g. nginx in nginx:latest.
+
+---
+🧪 Example 1
+
+docker images --format "{{.Repository}}"
+
+Output:
+
+nginx
+ubuntu
+myapp
+
+---
+🧪 Example 2 — With table
+
+docker images --format "table {{.Repository}}\t{{.Tag}}"
+
+
+Output:
+
+REPOSITORY     TAG
+nginx          latest
+ubuntu         22.04
+
+---
+🧪 Example 3 — With Filter
+
+docker images --filter reference='nginx*' --format "{{.Repository}}:{{.Tag}}"
+
+
+Output:
+
+nginx:latest
+nginx:1.25
+
+---
+🧩 2️⃣ {{.Tag}}
+---
+
+💡 Description:
+
+Shows the image tag (the version or label part of an image).
+
+---
+🧪 Example 1
+
+docker images --format "{{.Repository}}:{{.Tag}}"
+
+
+Output:
+
+nginx:latest
+ubuntu:22.04
+
+------------------------
+🧩 Combining Multiple Fields for Custom Output
+------------------------
+
+Example 1 — Compact summary
+
+docker images --format "{{.Repository}}:{{.Tag}} ({{.Size}} - {{.CreatedSince}})"
+
+
+Output:
+
+nginx:latest (142MB - 3 days ago)
+ubuntu:22.04 (72.8MB - 2 weeks ago)
+
+---------
+Example 2 — JSON structure (for automation)
+
+docker images --format '{"repository":"{{.Repository}}","tag":"{{.Tag}}","size":"{{.Size}}","created":"{{.CreatedAt}}"}'
+
+
+Output:
+
+{"repository":"nginx","tag":"latest","size":"142MB","created":"2025-10-23 14:34:11 +0000 UTC"}
+{"repository":"ubuntu","tag":"22.04","size":"72.8MB","created":"2025-10-13 10:45:22 +0000 UTC"}
+
+----------
+Example-3 (History)
+
+~ ➜  docker image history alpine
+IMAGE          CREATED       CREATED BY                                      SIZE      COMMENT
+706db57fb206   2 weeks ago   CMD ["/bin/sh"]                                 0B        buildkit.dockerfile.v0
+<missing>      2 weeks ago   ADD alpine-minirootfs-3.22.2-x86_64.tar.gz /…   8.32MB    buildkit.dockerfile.v0
+
+~ ➜  docker image history alpine --format "{{json .}}"
+{"Comment":"buildkit.dockerfile.v0","CreatedAt":"2025-10-08T11:04:56Z","CreatedBy":"CMD [\"/bin/sh\"]","CreatedSince":"2 weeks ago","ID":"706db57fb206","Size":"0B"}
+{"Comment":"buildkit.dockerfile.v0","CreatedAt":"2025-10-08T11:04:56Z","CreatedBy":"ADD alpine-minirootfs-3.22.2-x86_64.tar.gz /…","CreatedSince":"2 weeks ago","ID":"\u003cmissing\u003e","Size":"8.32MB"}
+
+~ ➜  docker image history alpine --format "{{.ID}} --> {{.CreatedSince}}"
+706db57fb206 --> 2 weeks ago
+<missing> --> 2 weeks ago
+
+
+
