@@ -1,0 +1,100 @@
+🔹 1. Basic Definition
+
+docker image tag is used to create a new tag for an existing Docker image.
+
+Think of it as labeling the same image with a different name or version.
+
+Tagging does not create a new image; it just gives another reference to the same image ID.
+
+---
+🔹 2. Basic Syntax
+
+docker image tag SOURCE_IMAGE[:TAG] TARGET_IMAGE[:TAG]
+
+SOURCE_IMAGE[:TAG] → existing image you want to tag
+
+TARGET_IMAGE[:TAG] → new name or version you want to assign
+
+If TAG is omitted, Docker defaults to latest.
+
+---
+🔹 3. Aliases
+
+There is no shorter alias specifically for tagging; the command is always:
+
+docker image tag
+
+---
+🔹 4. Basic Example
+
+Suppose you have an image ubuntu:20.04 and you want to give it a new tag myubuntu:v1:
+
+docker image tag ubuntu:20.04 myubuntu:v1
+
+Check with:
+
+docker images
+
+Output might look like:
+
+REPOSITORY    TAG       IMAGE ID
+ubuntu        20.04     7e0aa2d69a15
+myubuntu      v1        7e0aa2d69a15
+
+✅ Notice that both tags point to the same IMAGE ID.
+
+---
+🔹 5. Parameters / Options
+
+This command is very straightforward and doesn’t have many options:
+
+Option	Description
+
+None	Just specify source and target
+
+Tagging is lightweight because it doesn’t duplicate image data. It’s just creating a new reference.
+
+---
+🔹 6. Different Examples
+
+🧠 Example 1: Tag by image name
+
+docker image tag nginx mynginx:prod
+
+Renames nginx image to mynginx with tag prod.
+
+---
+🧠 Example 2: Tag by image ID
+
+docker images
+
+# IMAGE ID  SHA256:abc123
+
+docker image tag abc123 myapp:latest
+
+---
+🧠 Example 3: Tag for Docker registry
+
+docker image tag myapp:latest docker.io/myusername/myapp:v2
+
+Prepares image for pushing to Docker Hub or other registries.
+
+---
+🧠 Example 4: Multiple tags for same image
+
+docker image tag myapp:latest myapp:1.0
+
+docker image tag myapp:latest myapp:stable
+
+Useful for versioning and CI/CD pipelines.
+
+---
+🔹 7. How It Works Internally
+
+Docker identifies the IMAGE ID of the SOURCE_IMAGE.
+
+Creates a new reference (tag) in Docker’s metadata for the same IMAGE ID.
+
+No new layers or disk space are consumed.
+
+Both tags now reference the same underlying image layers.

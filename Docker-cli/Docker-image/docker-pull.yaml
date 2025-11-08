@@ -1,0 +1,217 @@
+🔹 1. Basic Definition
+
+docker image pull is used to download (pull) a Docker image from a remote registry (like Docker Hub or a private registry) to your local system.
+
+Essentially, it brings an image into your local environment so that you can:
+
+Create containers from it (docker run)
+
+Inspect or modify it
+
+Use it as a base image in your own builds
+
+---
+🔹 2. Basic Syntax
+
+docker image pull [OPTIONS] NAME[:TAG|@DIGEST]
+
+NAME → name of the image (e.g., ubuntu, nginx, mysql)
+
+TAG → optional version/tag (e.g., latest, 20.04, 1.21)
+
+DIGEST → image’s unique SHA256 hash identifier
+
+---
+🔹 3. Basic Example
+
+Pull the latest Ubuntu image:
+
+docker image pull ubuntu
+
+or equivalently:
+
+docker image pull ubuntu:latest
+
+Output:
+
+Using default tag: latest
+latest: Pulling from library/ubuntu
+Digest: sha256:cc1a...
+Status: Downloaded newer image for ubuntu:latest
+docker.io/library/ubuntu:latest
+
+---
+🔹 4. Understanding How It Works Internally
+
+When you execute docker image pull:
+
+Docker contacts the registry server (default is Docker Hub).
+
+It checks for the image manifest (metadata describing layers, tags, etc.).
+
+It downloads only the missing layers (already cached layers are skipped).
+
+The image is verified and stored locally in /var/lib/docker/.
+
+You can now run containers using this image.
+
+---
+🔹 5. Options / Parameters
+
+| Option                    | Description                                         | Example                                             |
+| ------------------------- | --------------------------------------------------- | --------------------------------------------------- |
+| `--all-tags`, `-a`        | Download all tags of an image                       | `docker image pull -a ubuntu`                       |
+| `--quiet`, `-q`           | Suppress verbose output                             | `docker image pull -q nginx`                        |
+| `--platform`              | Specify the platform (useful for multi-arch images) | `docker image pull --platform linux/arm64 nginx`    |
+| `--disable-content-trust` | Skip image verification                             | `docker image pull --disable-content-trust busybox` |
+
+---
+🔹 6. Detailed Examples
+
+🧠 Example 1: Pull specific version of an image
+
+docker image pull ubuntu:20.04
+
+Downloads Ubuntu version 20.04.
+
+--
+🧠 Example 2: Pull all available tags
+
+docker image pull -a alpine
+
+Pulls all tags for the Alpine image (e.g., latest, 3.14, 3.15, etc.).
+
+⚠️ Be cautious — this can download many images and consume a lot of disk space.
+
+--
+🧠 Example 3: Pull from a specific registry
+
+docker image pull myregistry.example.com/myapp:1.0
+
+Pulls image from a custom/private registry.
+
+If authentication is needed:
+
+docker login myregistry.example.com
+
+docker image pull myregistry.example.com/myapp:1.0
+
+--
+🧠 Example 4: Pull for a specific platform
+
+docker image pull --platform linux/arm64 nginx
+
+Useful when building images for Raspberry Pi, Apple M1/M2 Macs, or multi-architecture CI/CD.
+
+--
+🧠 Example 5: Pull by digest (for immutability)
+
+docker image pull ubuntu@sha256:cc1a0af....
+
+Ensures you always get the exact same image version.
+
+--
+🧠 Example 6: Quiet mode (CI/CD)
+
+docker image pull -q alpine
+
+Suppresses output, suitable for automation scripts.
+
+---
+🔹 7. Understanding Tags
+
+Tags represent versions or variants of an image.
+
+Example:
+
+docker image pull nginx:1.25
+docker image pull nginx:1.26
+docker image pull nginx:latest
+
+Each tag points to a different build/version of the same image repository.
+
+If no tag is specified, Docker assumes :latest.
+
+Tags are mutable, so latest can change over time — for stability, use fixed versions.
+
+---
+🔹 8. Different Levels of Image References
+
+| Reference Type      | Example                           | Description                 |
+| ------------------- | --------------------------------- | --------------------------- |
+| Repository only     | `ubuntu`                          | Defaults to `ubuntu:latest` |
+| Repository + Tag    | `ubuntu:20.04`                    | Specific version            |
+| Repository + Digest | `ubuntu@sha256:abc123`            | Specific immutable image    |
+| Full registry path  | `docker.io/library/ubuntu:latest` | Explicit registry reference |
+
+---
+🔹 9. Use Cases
+
+| Scenario                              | Example                                              | Description                  |
+| ------------------------------------- | ---------------------------------------------------- | ---------------------------- |
+| Pulling official images for local use | `docker image pull nginx`                            | Use base web server          |
+| Pulling from private registry         | `docker image pull registry.company.com/team/app:v1` | Secure internal deployment   |
+| Pulling for multi-architecture        | `docker image pull --platform linux/arm64 ubuntu`    | Cross-platform builds        |
+| CI/CD pipelines                       | `docker image pull myapp:latest`                     | Use latest build artifacts   |
+| Reproducible builds                   | `docker image pull ubuntu@sha256:xyz`                | Guarantee same binary layers |
+
+---
+🔹 12. Best Practices
+
+✅ Use specific version tags (avoid latest in production):
+
+docker image pull nginx:1.26.1
+
+
+✅ Use digests for immutability:
+
+docker image pull ubuntu@sha256:<digest>
+
+
+✅ Always verify source registry — avoid untrusted public images.
+
+✅ Use --platform explicitly for cross-platform builds (e.g., ARM).
+
+✅ Cache commonly used base images in build servers to save bandwidth.
+
+✅ Use automation tools like:
+
+docker-compose pull
+
+to pre-pull multiple images at once.
+
+---
+🔹 13. Deep Dive (Interview-Level Questions)
+
+🧠 Q1: What happens if the image already exists locally?
+
+Docker checks if the digest matches.
+
+If same → “Image is up to date.”
+
+If different → downloads the updated layers.
+
+🧠 Q2: What if an image has multiple layers?
+
+Docker pulls only missing layers — shared layers across images are reused to save bandwidth and space.
+
+🧠 Q3: How do you ensure your pipeline always uses the same image version?
+
+Use digest-based pulls instead of tags.
+
+🧠 Q4: What’s the difference between docker image pull and docker run?
+
+docker run automatically performs a docker image pull if the image doesn’t exist locally.
+
+🧠 Q5: How do you handle rate limits from Docker Hub?
+
+Use authenticated pulls (via docker login) or mirror registries.
+
+| Concept                           | Description                                      |
+| --------------------------------- | ------------------------------------------------ |
+| Image Layers                      | Each build step adds a new read-only layer       |
+| CAS (Content Addressable Storage) | Layers identified by content hash                |
+| Cache                             | Reuses layers if identical content exists        |
+| Registry Pull                     | Only missing layers are downloaded               |
+| OverlayFS                         | Combines layers into a single unified filesystem |
+| Deduplication                     | Shared layers stored once across images          |

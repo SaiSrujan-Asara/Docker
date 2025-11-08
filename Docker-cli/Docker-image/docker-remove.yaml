@@ -1,0 +1,171 @@
+🔹 1. Basic Definition
+
+docker image rm (or its alias docker rmi) is used to remove Docker images from your local system.
+
+When you no longer need certain images, or your disk space is running out, this command helps you clean them up manually.
+
+---
+🔹 2. Basic Syntax
+
+docker image rm [OPTIONS] IMAGE [IMAGE...]
+
+You can remove one or multiple images at once.
+
+IMAGE can be specified by:
+
+Repository name (ubuntu)
+
+Name and tag (ubuntu:20.04)
+
+Image ID
+
+Digest
+
+---
+🔹 3. Aliases
+
+docker rmi is simply a shortcut for docker image rm.
+
+Both are identical in functionality.
+
+Example:
+
+docker image rm nginx
+
+is the same as:
+
+docker rmi nginx
+
+---
+🔹 4. Basic Example
+
+Remove an image by its name:
+
+docker image rm nginx
+
+Output:
+
+Untagged: nginx:latest
+Deleted: sha256:8d8b4e1326...
+
+This means:
+
+The nginx:latest tag was removed.
+
+The actual image layers were deleted (if not used by other images/containers).
+
+---
+🔹 5. Options / Parameters
+
+| Option          | Description                                                                    | Example                                   |
+| --------------- | ------------------------------------------------------------------------------ | ----------------------------------------- |
+| `-f`, `--force` | Force removal of image even if used by stopped containers or has multiple tags | `docker image rm -f ubuntu`               |
+| `--no-prune`    | Don’t remove untagged parent images (keep dangling layers)                     | `docker image rm --no-prune myapp:latest` |
+
+
+---
+🔹 6. Detailed Examples
+
+🧠 Example 1: Remove image by name
+
+docker image rm ubuntu
+
+Removes the ubuntu:latest image.
+
+🧠 Example 2: Remove image by name and tag
+
+docker image rm ubuntu:20.04
+
+🧠 Example 3: Remove image by image ID
+
+First, get the image ID:
+
+docker images
+
+Then:
+
+docker image rm 7e0aa2d69a15
+
+🧠 Example 4: Remove multiple images
+
+docker image rm nginx ubuntu mysql
+
+🧠 Example 5: Force remove an image
+
+If the image is used by a stopped container:
+
+docker image rm -f nginx
+
+🧠 Example 6: Keep untagged parent images
+
+docker image rm --no-prune myapp:1.0
+
+---
+🔹 7. How It Works Internally
+
+When you run docker image rm <image>:
+
+Docker first untags the image (removes its repository:tag reference).
+
+Then, if no other tags or containers reference that image, Docker deletes its layers.
+
+Docker checks:
+
+If the image is being used by any container (running or stopped).
+
+If yes → it refuses to remove (unless -f used).
+
+If the image has multiple tags, only that tag is removed.
+
+If no more references remain, image layers are deleted from disk.
+
+---
+🔹 8. Difference Between Untagging and Deleting
+
+| Action     | Description                                                      | Example                                                       |
+| ---------- | ---------------------------------------------------------------- | ------------------------------------------------------------- |
+| **Untag**  | Remove the tag name, but image layers remain if still referenced | `docker image rm myapp:latest`                                |
+| **Delete** | Remove the actual image data and layers if no references remain  | Happens automatically when no tags or containers depend on it |
+
+
+---
+🔹 9. Common Errors & Fixes
+
+| Error Message                                     | Cause                        | Solution                                   |
+| ------------------------------------------------- | ---------------------------- | ------------------------------------------ |
+| `conflict: unable to remove repository reference` | Image is used by another tag | Remove all tags or use image ID            |
+| `image is being used by running container`        | A container uses this image  | Stop/remove container first or use `-f`    |
+| `no such image`                                   | Wrong name or tag            | Check with `docker images` for correct tag |
+
+
+---
+🔹 10. Interview-Level Deep Insights
+
+🧠 Q1: What’s the difference between docker image rm and docker image prune?
+
+rm = manual, specific image deletion.
+
+prune = automatic, removes unused or dangling images.
+
+🧠 Q2: Why might an image not be deleted even after running docker image rm?
+
+Because one or more containers still reference it (even stopped ones).
+
+🧠 Q3: What happens internally when an image is removed?
+
+Docker:
+
+Untags image
+
+Checks references
+
+Deletes layers from local storage if unreferenced
+
+Updates metadata and cache indices
+
+🧠 Q4: How can you find which containers are using an image?
+docker ps -a --filter "ancestor=<image_name>"
+
+🧠 Q5: What’s the risk of using docker image rm -f?
+
+It may break running or dependent containers unexpectedly.

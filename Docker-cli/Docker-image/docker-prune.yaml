@@ -1,0 +1,228 @@
+🧠 1. What is docker image prune?
+
+docker image prune is a Docker CLI command used to remove unused (dangling or unreferenced) images from your local system to free up disk space.
+
+Think of it like a cleanup command for Docker images that are no longer needed.
+
+---
+🧩 2. Basic Concept — What are "Dangling Images"?
+
+Before understanding docker image prune, you need to understand dangling images.
+
+🧱 What are Dangling Images?
+
+These are intermediate image layers that are not tagged and not referenced by any container.
+
+They usually occur when:
+
+You rebuild Docker images frequently.
+
+You update or rebuild Dockerfiles.
+
+They appear in docker images as:
+
+<none>    <none>    34ab9d88c0f7
+
+
+🟠 Example:
+
+When you rebuild an image multiple times:
+
+docker build -t myapp:latest .
+docker build -t myapp:latest .
+
+
+Each new build might leave behind an old image (<none>), which is dangling.
+
+------
+🧹 3. Basic Usage of docker image prune
+
+🧾 Command:
+docker image prune
+
+💡 What it does:
+
+Removes all dangling images (those not tagged and not used by any container).
+
+⚠️ By default:
+
+It will prompt for confirmation before deleting images:
+
+WARNING! This will remove all dangling images.
+
+Are you sure you want to continue? [y/N]
+
+✅ Example:
+
+docker image prune
+
+After confirmation, you might see output like:
+
+Deleted Images:
+deleted: sha256:34ab9d88c0f7f53d...
+deleted: sha256:9b8e784f61a5d...
+
+Total reclaimed space: 1.24GB
+
+----
+
+| Option          | Description                                           | Example                                   |
+| --------------- | ----------------------------------------------------- | ----------------------------------------- |
+| `-a`, `--all`   | Remove **all unused** images (not just dangling ones) | `docker image prune -a`                   |
+| `-f`, `--force` | Skip confirmation prompt                              | `docker image prune -f`                   |
+| `--filter`      | Provide conditions to prune selectively               | `docker image prune --filter "until=24h"` |
+
+
+⚙️ 4. Parameters and Options (with examples)
+
+Let’s explore all options for docker image prune one by one 👇
+
+(a) -a or --all
+
+Removes all unused images, not just dangling ones.
+
+🔹 Command:
+
+docker image prune -a
+
+🔹 Explanation:
+
+Deletes all images that are not used by any existing container, regardless of whether they are tagged or not.
+
+Very powerful and potentially destructive.
+
+🔹 Example:
+
+If you have images:
+
+myapp:v1   -> used by a container
+myapp:v2   -> not used by any container
+<none>     -> dangling
+
+Then docker image prune -a will delete:
+
+myapp:v2
+<none>
+
+But not myapp:v1.
+
+(b) --filter
+
+Allows you to control which images get pruned by specifying filtering rules.
+
+Common filters:
+
+| Filter  | Description                                 | Example                            |
+| ------- | ------------------------------------------- | ---------------------------------- |
+| `until` | Remove images created before a certain time | `--filter "until=24h"`             |
+| `label` | Remove images with a specific label         | `--filter "label=maintainer=John"` |
+
+🧠 Example 1: Remove images older than 24 hours
+
+docker image prune -a --filter "until=24h"
+
+Deletes unused images created more than 24 hours ago.
+
+🧠 Example 2: Remove images with a specific label
+
+docker image prune --filter "label=old_build"
+
+(c) -f or --force
+
+Skips the confirmation prompt.
+
+🔹 Example 3:
+
+docker image prune -a -f
+
+No “Are you sure?” prompt — executes directly.
+
+🔁 Example 4:
+
+docker system prune -a
+
+This is like a full “spring cleaning” of Docker — removes all unused data (containers, images, volumes, etc.)
+
+-----
+🧰 6. Use Cases
+
+✅ Where to Use
+
+After multiple image builds, to reclaim disk space.
+
+In CI/CD pipelines, after build completion.
+
+On developer machines with limited storage.
+
+Before running docker system prune (more controlled cleanup).
+
+❌ Where NOT to Use
+
+On production servers with critical images not backed up or used in running containers.
+
+Without understanding what images are in use.
+
+Without the --filter flag if you want selective pruning.
+
+---
+🌟 7. Best Practices
+
+Always verify before pruning
+
+docker images
+
+Check which images are unused.
+
+Use filters to avoid accidental deletions
+
+docker image prune -a --filter "until=48h"
+
+
+Use in CI/CD cleanup stages
+To save space on build servers.
+
+Avoid -a on shared systems
+Other users’ images might be deleted.
+
+Combine with other prune commands
+For example:
+
+docker container prune -f && docker image prune -a -f
+
+
+Automate cleanup on schedule (cron job)
+Example weekly cleanup:
+
+0 0 * * 0 docker image prune -a -f
+
+🧩 8. Deep Dive — What Happens Internally
+
+When you run docker image prune, Docker:
+
+Lists all local images.
+
+Checks which are:
+
+Not referenced by any tag or container.
+
+Deletes those from:
+
+The local image store (/var/lib/docker/).
+
+Frees up space in layers, cache, and metadata.
+
+---
+💬 9. Interview Questions and Scenarios
+
+Q: What’s the difference between docker image prune and docker system prune?
+A: docker image prune cleans only images, while docker system prune cleans images, containers, networks, and caches.
+
+Q: How can you remove images older than 7 days?
+A: docker image prune -a --filter "until=168h"
+
+
+Q: How do you safely free space without deleting critical images?
+A: Use --filter and avoid -a unless you’re sure no container uses those images.
+
+Q: What happens if an image is in use by a container?
+A: Docker won’t delete that image — even with -a
