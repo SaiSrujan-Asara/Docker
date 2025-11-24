@@ -1,0 +1,141 @@
+✅ Docker container restart
+
+docker container restart stops a running container and then starts it again. 
+
+By default, it waits 10 seconds for the container to stop gracefully before forcefully killing it (SIGKILL).
+
+⚠️ Restarting a container resets its runtime state, but data in volumes is preserved.
+
+---
+🔹 1. Basic Syntax
+
+docker container restart [OPTIONS] CONTAINER [CONTAINER...]
+
+Shortcut:
+
+docker restart <container_name_or_id>
+
+docker restart is an alias for docker container restart.
+
+---
+🔹 2. Key Options / Flags
+
+| Flag             | Description                                                        | Example                                     |
+| ---------------- | ------------------------------------------------------------------ | ------------------------------------------- |
+| `-t`, `--time`   | Seconds to wait for container to stop before SIGKILL (default 10s) | `docker container restart -t 5 mycontainer` |
+| `[CONTAINER...]` | Names or IDs of one or more containers                             | `docker container restart mynginx myubuntu` |
+
+
+---
+
+🔹 3. How It Works
+
+Sends SIGTERM to PID 1 in the container
+
+Waits the specified timeout (default 10s) for graceful shutdown
+
+If container does not stop, sends SIGKILL
+
+Starts the container again with the same configuration as before
+
+Returns the container IDs/names that were restarted
+
+---
+
+🔹 4. Examples
+
+Example 1 — Restart a single container
+
+docker container restart mynginx
+
+Output:
+
+mynginx
+
+Stops container gracefully (SIGTERM), then starts it again
+
+--
+Example 2 — Restart multiple containers
+
+docker container restart mynginx myubuntu
+
+Output:
+
+mynginx
+myubuntu
+
+Batch operation for multiple containers
+
+--
+Example 3 — Restart with shorter timeout
+
+docker container restart -t 5 mynginx
+
+Waits 5 seconds before sending SIGKILL if container doesn’t stop
+
+--
+Example 4 — Restart by container ID
+
+docker restart c1b2d3e4f5g6
+
+Works with container IDs instead of names
+
+---
+🔹 5. Use Cases
+
+Apply configuration changes
+
+For example, if you updated environment variables via Docker API or docker-compose
+
+Recover a hung container
+
+Restarting can bring a container back to a healthy state
+
+Automation scripts / CI pipelines
+
+Restart multiple containers after deployment
+
+Rolling updates in development
+
+Quick container restart instead of full rebuild
+
+---
+🔹 6. Differences from Related Commands
+
+| Command          | Action                    | Graceful Shutdown              | Force Stop | Use Case                        |
+| ---------------- | ------------------------- | ------------------------------ | ---------- | ------------------------------- |
+| `docker stop`    | Stop container            | ✅ SIGTERM then SIGKILL         | ❌          | Manual stop                     |
+| `docker kill`    | Force stop container      | ❌ Immediate                    | ✅          | Emergency stop                  |
+| `docker restart` | Stop then start container | ✅ Default SIGTERM then SIGKILL | ✅ via `-t` | Quick recovery or apply changes |
+
+---
+🔹 7. Best Practices
+
+Use default timeout (10s) for graceful shutdown
+
+Reduce -t for quick restarts in automation
+
+Combine with docker container ls to check container status before and after restart
+
+Use container names for readability in scripts
+
+Avoid restarting containers with critical unsaved state
+
+---
+🔹 8. Quick Reference Table
+
+| Task                        | Command                                     | Notes                    |
+| --------------------------- | ------------------------------------------- | ------------------------ |
+| Restart a single container  | `docker container restart mynginx`          | Default 10s timeout      |
+| Restart multiple containers | `docker container restart mynginx myubuntu` | Batch restart            |
+| Restart with custom timeout | `docker container restart -t 5 mynginx`     | Shorter wait for SIGKILL |
+| Restart by container ID     | `docker restart c1b2d3e4f5g6`               | Alternative to name      |
+
+---
+✅ Summary:
+
+docker container restart = stop + start in one command
+
+Uses SIGTERM → SIGKILL for shutdown, then starts container again
+
+Useful for quick recovery, applying updates, or automation

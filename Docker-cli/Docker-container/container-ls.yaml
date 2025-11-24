@@ -1,0 +1,153 @@
+✅ Docker container ls
+
+docker container ls (or docker ps) lists running containers by default. It shows essential information like container ID, name, image, status, ports, and more.
+
+---
+🔹 1. Basic Syntax
+
+docker container ls [OPTIONS]
+
+Shortcut:
+
+docker ps [OPTIONS]
+
+Both are equivalent (docker ps = shorthand for docker container ls)
+
+---
+🔹 2. Default Behavior
+
+Lists only running containers
+
+Shows summary info, not full JSON (use docker inspect for details)
+
+Example:
+
+docker container ls
+
+Output:
+
+CONTAINER ID   IMAGE          COMMAND                  CREATED        STATUS        PORTS                  NAMES
+c1b2d3e4f5g6   nginx:latest   "nginx -g 'daemon of…"   2 hours ago    Up 2 hours    0.0.0.0:8080->80/tcp   mynginx
+a7b8c9d0e1f2   ubuntu:20.04   "bash"                   3 hours ago    Up 3 hours                           myubuntu
+
+---
+🔹 3. Key Options
+
+| Option          | Description                               | Example                                              |
+| --------------- | ----------------------------------------- | ---------------------------------------------------- |
+| `-a`, `--all`   | Show all containers (running and stopped) | `docker container ls -a`                             |
+| `-q`, `--quiet` | Show only container IDs                   | `docker container ls -q`                             |
+| `--filter`      | Filter output based on conditions         | `docker container ls --filter "status=exited"`       |
+| `--format`      | Format output using Go templates          | `docker container ls --format "{{.ID}}: {{.Names}}"` |
+| `--no-trunc`    | Don’t truncate output                     | `docker container ls --no-trunc`                     |
+| `-n N`          | Show last N containers                    | `docker container ls -n 5`                           |
+| `-s`, `--size`  | Show container sizes                      | `docker container ls -s`                             |
+
+
+---
+🔹 4. Example Usage
+
+Example 1 — Show running containers
+
+docker container ls
+
+Output:
+
+CONTAINER ID   IMAGE       COMMAND      STATUS        PORTS   NAMES
+c1b2d3e4f5g6   nginx       "nginx ..."  Up 2 hours   80/tcp  mynginx
+
+--
+Example 2 — Show all containers (including stopped)
+
+docker container ls -a
+
+Output:
+
+CONTAINER ID   IMAGE       COMMAND      STATUS                      PORTS   NAMES
+c1b2d3e4f5g6   nginx       "nginx ..."  Up 2 hours                  80/tcp  mynginx
+a7b8c9d0e1f2   ubuntu      "bash"       Exited (0) 1 hour ago               myubuntu
+
+--
+Example 3 — Show only container IDs
+
+docker container ls -q
+
+Output:
+
+c1b2d3e4f5g6
+a7b8c9d0e1f2
+
+Useful for scripting:
+
+docker stop $(docker container ls -q)
+
+Stops all running containers
+
+--
+Example 4 — Filter containers
+
+docker container ls --filter "status=exited"
+
+Shows only stopped containers
+
+docker container ls --filter "ancestor=nginx"
+
+Shows containers created from nginx image
+
+--
+Example 5 — Custom formatting
+
+docker container ls --format "{{.ID}} - {{.Image}} - {{.Status}}"
+
+Output:
+
+c1b2d3e4f5g6 - nginx:latest - Up 2 hours
+a7b8c9d0e1f2 - ubuntu:20.04 - Exited (0) 1 hour ago
+
+--
+Example 6 — Show container size
+
+docker container ls -s
+
+Output:
+
+CONTAINER ID   IMAGE       SIZE       CREATED        STATUS        NAMES
+c1b2d3e4f5g6   nginx       23MB (virtual 133MB)  2 hours ago  Up 2 hours  mynginx
+
+---
+🔹 5. Use Cases
+
+Quick overview of running containers
+
+Filter stopped containers for cleanup
+
+docker rm $(docker container ls -a -q --filter "status=exited")
+
+Get container IDs for automation
+
+docker exec -it $(docker container ls -q -f "name=mynginx") bash
+
+Monitor container uptime and ports
+
+---
+🔹 6. Differences Between docker ps and docker container ls
+
+| Feature               | `docker ps`                           | `docker container ls` |
+| --------------------- | ------------------------------------- | --------------------- |
+| Alias                 | ✅ `docker ps` is shorthand            | ❌ Full command        |
+| Options               | Same as `docker container ls`         | Same as `docker ps`   |
+| Function              | Lists running containers              | Same                  |
+| Preferred for scripts | ✅ `docker container ls` more explicit | ✅                     |
+
+---
+🔹 7. Quick Reference Table
+
+| Task                    | Command                                             | Description                      |
+| ----------------------- | --------------------------------------------------- | -------------------------------- |
+| List running containers | `docker container ls`                               | Default                          |
+| List all containers     | `docker container ls -a`                            | Include stopped                  |
+| List IDs only           | `docker container ls -q`                            | Useful for scripts               |
+| Filter by status        | `docker container ls -f "status=exited"`            | Show only stopped containers     |
+| Filter by image         | `docker container ls -f "ancestor=nginx"`           | Show containers from nginx       |
+| Custom format           | `docker container ls --format "{{.ID}} {{.Image}}"` | Only show selected fields        |
+| Show size               | `docker container ls -s`                            | Shows container and virtual size |

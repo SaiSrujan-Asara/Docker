@@ -1,0 +1,146 @@
+✅ Docker container rm
+
+docker container rm is used to delete one or more containers. Only stopped containers can be removed by default. 
+
+If you try to remove a running container, Docker will return an error unless you force removal.
+
+⚠️ Removing a container deletes all its writable layers and any data not stored in volumes. This action is irreversible.
+
+---
+🔹 1. Basic Syntax
+
+docker container rm [OPTIONS] CONTAINER [CONTAINER...]
+
+Shortcut:
+
+docker rm <container_name_or_id>
+
+docker rm is an alias for docker container rm.
+
+---
+🔹 2. Key Options / Flags
+
+| Flag              | Description                                   | Example                                |
+| ----------------- | --------------------------------------------- | -------------------------------------- |
+| `-f`, `--force`   | Remove a running container by sending SIGKILL | `docker container rm -f mycontainer`   |
+| `-v`, `--volumes` | Remove volumes associated with the container  | `docker container rm -v mycontainer`   |
+| `[CONTAINER...]`  | Names or IDs of containers to remove          | `docker container rm mynginx myubuntu` |
+
+---
+🔹 3. How It Works
+
+By default, only stopped containers can be removed
+
+If container is running, must use -f to force removal
+
+Optional -v removes volumes attached to the container
+
+Returns the container IDs or names of removed containers
+
+---
+🔹 4. Examples
+
+Example 1 — Remove a stopped container
+
+docker container rm mynginx
+
+Output:
+
+mynginx
+
+Container removed, associated volumes not removed
+
+--
+Example 2 — Force remove a running container
+
+docker container rm -f mynginx
+
+Sends SIGKILL to stop the container and removes it immediately
+
+--
+Example 3 — Remove multiple containers
+
+docker container rm mynginx myubuntu
+
+Output:
+
+mynginx
+myubuntu
+
+Useful in cleanup scripts
+
+--
+Example 4 — Remove container with volumes
+
+docker container rm -v mynginx
+
+Deletes container and any attached volumes
+
+Useful to free disk space
+
+--
+Example 5 — Remove all stopped containers
+
+docker container rm $(docker container ls -a -q)
+
+Lists all containers (running and stopped)
+
+Removes them one by one
+
+Works well in automation scripts
+
+---
+🔹 5. Use Cases
+
+Cleanup old containers:
+
+docker container rm $(docker container ls -a -f "status=exited" -q)
+
+
+Force remove misbehaving containers:
+
+docker container rm -f mycontainer
+
+
+Remove containers and their volumes for fresh environment:
+
+docker container rm -v $(docker container ls -a -q)
+
+
+CI/CD pipelines:
+
+Remove temporary containers after tests finish
+
+---
+🔹 6. Differences Between Stop and Remove
+
+| Command                  | Action                         | Can remove running container? | Effect on volumes         |
+| ------------------------ | ------------------------------ | ----------------------------- | ------------------------- |
+| `docker container stop`  | Gracefully stops container     | ❌                             | No                        |
+| `docker container kill`  | Immediately stops container    | ❌                             | No                        |
+| `docker container rm`    | Deletes container              | ✅ with `-f`                   | ❌ by default, ✅ with `-v` |
+| `docker container prune` | Removes all stopped containers | N/A                           | No by default, can filter |
+
+---
+🔹 7. Best Practices
+
+Always stop containers before removal if possible
+
+Use -f only for forceful removal when necessary
+
+Use -v to clean up volumes attached to ephemeral containers
+
+Combine with docker container ls -a -q for bulk removal
+
+Avoid removing containers that store important data outside volumes
+
+---
+🔹 8. Quick Reference Table
+
+| Task                                   | Command                                            | Notes                     |
+| -------------------------------------- | -------------------------------------------------- | ------------------------- |
+| Remove a single stopped container      | `docker container rm mynginx`                      | Container must be stopped |
+| Force remove a running container       | `docker container rm -f mynginx`                   | Sends SIGKILL             |
+| Remove multiple containers             | `docker container rm mynginx myubuntu`             | Batch removal             |
+| Remove container with attached volumes | `docker container rm -v mynginx`                   | Frees volume disk space   |
+| Remove all stopped containers          | `docker container rm $(docker container ls -a -q)` | Bulk cleanup              |

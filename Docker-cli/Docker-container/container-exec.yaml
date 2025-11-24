@@ -1,0 +1,131 @@
+✅ Docker exec Command
+
+docker exec is used to run a new command inside an existing, running container.
+Unlike docker start or docker run, it does not start the container itself — the container must already be running.
+
+---
+🔹 1. Basic Syntax
+
+docker exec [OPTIONS] CONTAINER COMMAND [ARG...]
+
+CONTAINER → container name or ID
+
+COMMAND → command you want to run inside the container
+
+[ARG...] → arguments for the command
+
+---
+🔹 2. Key Flags
+
+| Flag                  | Description                               | Example                                        |
+| --------------------- | ----------------------------------------- | ---------------------------------------------- |
+| `-i`, `--interactive` | Keep STDIN open                           | `docker exec -i mycontainer bash`              |
+| `-t`, `--tty`         | Allocate a pseudo-TTY                     | `docker exec -t mycontainer bash`              |
+| `-it`                 | Combine `-i` + `-t` for interactive shell | `docker exec -it mycontainer bash`             |
+| `-d`, `--detach`      | Run command in background                 | `docker exec -d mycontainer sleep 60`          |
+| `--user`              | Run command as specific user              | `docker exec -it --user root mycontainer bash` |
+| `--privileged`        | Run with extended privileges              | `docker exec --privileged mycontainer bash`    |
+
+
+---
+🔹 3. Main vs Non-Main Process
+
+docker exec runs a new process inside the container, separate from PID 1
+
+This means:
+
+You can interact with non-main processes
+
+You do not interfere with the container’s main process
+
+--
+Example
+
+docker exec -it mynginx bash
+
+PID 1 → nginx (daemon)
+
+bash → new process, interactive shell inside container
+
+You can inspect, debug, or run commands without stopping nginx
+
+---
+🔹 4. Examples
+
+Example 1 — Interactive shell in running container
+
+docker exec -it myubuntu bash
+
+Opens a bash shell in container
+
+Can type commands:
+
+root@container:/# ls
+bin  etc  home  var
+root@container:/# whoami
+root
+
+--
+Example 2 — Run a command non-interactively
+
+docker exec mynginx cat /etc/nginx/nginx.conf
+
+Prints the config file
+
+Runs a new process
+
+No shell opened
+
+--
+Example 3 — Run a process in the background
+
+docker exec -d mycontainer sleep 60
+
+Runs sleep 60 as a detached process
+
+PID 1 (main process) is unaffected
+
+--
+Example 4 — Run as a different user
+
+docker exec -it --user www-data mynginx bash
+
+Opens shell as www-data user
+
+Useful for debugging permission issues
+
+---
+🔹 5. Behavior Summary
+
+| Behavior                            | docker exec                         | docker start -ai       | docker run -ai                  |
+| ----------------------------------- | ----------------------------------- | ---------------------- | ------------------------------- |
+| Attach to main process              | ❌ No                                | ✅ Yes                  | ✅ Yes (new container)           |
+| Create new process inside container | ✅ Yes                               | ❌ No                   | ✅ Yes (new container)           |
+| Interactive shell                   | ✅ Yes with `-it`                    | Only if PID 1 is shell | Only if CMD/ENTRYPOINT is shell |
+| Affect main process                 | ❌ Main process continues unaffected | ✅ PID 1                | ✅ New PID 1 for container       |
+| Attach to logs                      | ❌ Not automatically                 | ✅ Yes                  | ✅ Yes                           |
+
+
+---
+🔹 6. Best Practices
+
+Use docker exec -it for debugging running containers
+
+Do not use exec for starting long-running daemons — use docker start -d or docker run -d instead
+
+Use --user to debug permissions inside the container
+
+Use -d to run background commands safely
+
+Combine with ps, top, netstat inside the container to monitor processes
+
+---
+🔹 7. Edge Cases / Notes
+
+docker exec cannot run in a stopped container → container must be running
+
+You can open multiple exec sessions simultaneously
+
+Does not change container’s PID 1
+
+Interactive sessions require -it; without -t, you may see formatting issues

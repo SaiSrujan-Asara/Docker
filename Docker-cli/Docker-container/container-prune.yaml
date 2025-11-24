@@ -1,0 +1,148 @@
+✅ Docker container prune
+
+docker container prune removes all stopped containers in your Docker environment. 
+
+It’s a cleanup command to free up disk space and reduce clutter from containers that are no longer running.
+
+⚠️ This is irreversible. Once a container is pruned, all its data not stored in volumes is lost.
+
+---
+🔹 1. Basic Syntax
+
+docker container prune [OPTIONS]
+
+Shortcut:
+
+docker prune -f
+
+docker container prune is more explicit than just docker prune, which can remove networks, images, and volumes as well.
+
+---
+🔹 2. Key Options / Flags
+
+| Flag            | Description                    | Example                                       |
+| --------------- | ------------------------------ | --------------------------------------------- |
+| `-f`, `--force` | Skip the confirmation prompt   | `docker container prune -f`                   |
+| `--filter`      | Provide conditions for pruning | `docker container prune --filter "until=24h"` |
+
+---
+🔹 3. How It Works
+
+Only stopped containers are considered
+
+Containers with running processes are ignored
+
+If no filters are used, all stopped containers are removed
+
+---
+🔹 4. Filters
+
+You can filter containers to prune based on:
+
+| Filter              | Description                                         | Example                                                                     |
+| ------------------- | --------------------------------------------------- | --------------------------------------------------------------------------- |
+| `until=<timestamp>` | Remove containers **stopped before a certain time** | `docker container prune --filter "until=24h"` → containers stopped >24h ago |
+| `label=<label>`     | Remove containers with a specific label             | `docker container prune --filter "label=maintainer=alice"`                  |
+
+---
+🔹 5. Examples
+
+Example 1 — Prune all stopped containers
+
+docker container prune
+
+Prompt:
+
+WARNING! This will remove all stopped containers.
+
+Are you sure you want to continue? [y/N] y
+
+Output:
+
+Deleted Containers:
+c1b2d3e4f5g6
+a7b8c9d0e1f2
+
+Total reclaimed space: 120MB
+
+--
+Example 2 — Force prune without prompt
+
+docker container prune -f
+
+Automatically deletes all stopped containers
+
+Useful in automation scripts
+
+--
+Example 3 — Prune containers stopped more than 24 hours ago
+
+docker container prune --filter "until=24h"
+
+Only removes containers stopped earlier than 24 hours
+
+--
+Example 4 — Prune containers with a specific label
+
+docker container prune --filter "label=env=dev"
+
+Removes only containers labeled env=dev
+
+Great for cleaning up temporary dev containers without touching prod containers
+
+---
+🔹 6. Use Cases
+
+Free disk space
+
+docker system df
+docker container prune -f
+
+--
+Remove temporary containers created for testing
+
+Automation scripts for CI/CD pipelines
+
+docker container prune -f
+docker build -t myapp .
+docker run -d myapp
+
+Clean up stale containers older than a certain time using until filter
+
+---
+🔹 7. Differences from Other Cleanup Commands
+
+| Command                  | What it removes                                  | Notes                                               |
+| ------------------------ | ------------------------------------------------ | --------------------------------------------------- |
+| `docker container prune` | Stopped containers                               | Only containers, safe for images/volumes            |
+| `docker system prune`    | All unused objects: containers, images, networks | More aggressive, can remove dangling images/volumes |
+| `docker image prune`     | Unused/dangling images                           | Only images                                         |
+| `docker volume prune`    | Unused volumes                                   | Can delete persistent data                          |
+| `docker network prune`   | Unused networks                                  | Removes networks not used by any container          |
+
+
+---
+🔹 8. Best Practices
+
+Always check running containers before pruning:
+
+docker container ls
+
+Use -f in scripts or automation, but avoid manually unless necessary
+
+Use filters to avoid removing containers you might need: until, label
+
+Combine with docker system df to monitor reclaimed space
+
+Avoid pruning containers with important data not in volumes
+
+---
+🔹 9. Quick Reference Table
+
+| Task                          | Command                                           | Notes                    |
+| ----------------------------- | ------------------------------------------------- | ------------------------ |
+| Prune all stopped containers  | `docker container prune`                          | Prompts for confirmation |
+| Force prune                   | `docker container prune -f`                       | No prompt                |
+| Prune containers stopped >24h | `docker container prune --filter "until=24h"`     | Only old containers      |
+| Prune containers with a label | `docker container prune --filter "label=env=dev"` | Selective cleanup        |
+| Check space reclaimed         | `docker system df`                                | Before/after prune       |

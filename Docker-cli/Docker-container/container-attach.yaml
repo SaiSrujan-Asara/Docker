@@ -1,0 +1,138 @@
+✅ Docker attach Command
+
+docker attach is used to attach your terminal to a running container’s main process (PID 1). Unlike docker exec, it does not create a new process — it connects you directly to the container’s existing process streams (stdin, stdout, stderr).
+
+---
+🔹 1. Basic Syntax
+
+docker attach [OPTIONS] CONTAINER
+
+CONTAINER → container name or ID
+
+Connects your terminal to the container’s STDIN, STDOUT, STDERR
+
+---
+🔹 2. Key Flags
+
+| Flag                           | Description                                                                   | Example                                            |
+| ------------------------------ | ----------------------------------------------------------------------------- | -------------------------------------------------- |
+| `--detach-keys`                | Override the key sequence to detach from container                            | `docker attach --detach-keys="ctrl-x" mycontainer` |
+| *No `-i` or `-t` flags needed* | Unlike `docker exec`, `attach` just uses the streams of the running container | N/A                                                |
+
+---
+🔹 3. Behavior and Characteristics
+
+| Feature                       | `docker attach`                                          |
+| ----------------------------- | -------------------------------------------------------- |
+| Attaches to running container | ✅ Only running                                           |
+| Attaches to PID 1             | ✅ Only main process                                      |
+| Creates new process?          | ❌ No                                                     |
+| STDIN open by default?        | ✅ If container was started with `-i`                     |
+| Terminal interaction          | Limited to what PID 1 supports                           |
+| Multiple attaches?            | ✅ Allowed — multiple terminals can attach simultaneously |
+| Detach key                    | Default `Ctrl+P Ctrl+Q`                                  |
+
+
+---
+🔹 4. Examples
+
+Example 1 — Attach to running container logs
+
+docker attach mynginx
+
+PID 1 → nginx (daemon)
+
+Shows live logs
+
+Input is ignored because nginx doesn’t read stdin
+
+Output (live log):
+
+[notice] 1#1: nginx started
+[notice] 1#1: listening on port 80
+
+--
+Example 2 — Attach to interactive container
+
+docker run -it ubuntu bash
+
+PID 1 → bash
+
+Terminal is interactive
+
+Then in another terminal:
+
+docker attach <container_id>
+
+You can see the same shell session and interact with it
+
+--
+Example 3 — Detach without stopping
+
+docker attach --detach-keys="ctrl-x" mycontainer
+
+Allows you to detach safely
+
+Default detach keys: Ctrl+P Ctrl+Q
+
+---
+🔹 5. Main vs Non-Main Process
+
+Attach always connects to PID 1 only
+
+Cannot attach to a non-main process (use docker exec instead)
+
+Input is only accepted if PID 1 reads from STDIN
+
+---
+🔹 6. Difference Between docker attach and docker exec
+
+| Feature                          | docker attach                          | docker exec                               |
+| -------------------------------- | -------------------------------------- | ----------------------------------------- |
+| Connects to existing process     | ✅ PID 1                                | ❌ Creates new process                     |
+| Can run arbitrary command        | ❌ No                                   | ✅ Yes                                     |
+| Can attach to multiple processes | ❌ No, only PID 1                       | ✅ Multiple exec sessions possible         |
+| Terminal input                   | Only if PID 1 reads stdin              | Any process can be interactive with `-it` |
+| Use case                         | View logs / interact with main process | Run commands / debugging inside container |
+
+---
+🔹 7. Edge Cases / Notes
+
+Non-interactive PID 1 (e.g., nginx) → attach shows logs only
+
+Interactive shell PID 1 → attach shares same shell, input possible
+
+Multiple attaches → all attached terminals share stdout/stderr
+
+Detach → use default Ctrl+P Ctrl+Q or --detach-keys
+
+---
+🔹 8. Best Practices
+
+Use docker attach for debugging or monitoring the main process
+
+Use docker exec -it for running new commands or inspecting container internals
+
+Avoid attaching to non-interactive daemons if you need to run commands
+
+Use custom detach keys if the default conflicts with your workflow
+
+---
+🔹 9. Example Scenarios
+
+| Scenario                                     | Command                                   | Result                                               |
+| -------------------------------------------- | ----------------------------------------- | ---------------------------------------------------- |
+| View logs of running nginx                   | `docker attach mynginx`                   | Shows live logs; input ignored                       |
+| Join interactive bash                        | `docker attach mybash`                    | Can type commands, interacts with same shell session |
+| Multiple terminals monitoring same container | Open multiple `docker attach <container>` | All terminals see same output in real time           |
+
+---
+🔹 10. Summary
+
+docker attach = attach to running container PID 1, reuse existing process streams
+
+docker exec = create new process inside running container
+
+docker start -ai = start stopped container and attach to PID 1
+
+docker run -ai = start new container and attach to PID 1

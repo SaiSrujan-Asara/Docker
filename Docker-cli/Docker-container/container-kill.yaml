@@ -1,0 +1,148 @@
+✅ Docker container kill
+
+docker container kill is used to forcefully stop a running container by sending a signal (default SIGKILL) to its main process (PID 1). 
+
+Unlike docker stop, it does not attempt a graceful shutdown unless you specify another signal.
+
+⚠️ This command can cause data loss if the container is running processes that haven’t saved their state.
+
+---
+🔹 1. Basic Syntax
+
+docker container kill [OPTIONS] CONTAINER [CONTAINER...]
+
+Shortcut:
+
+docker kill <container_name_or_id>
+
+
+docker kill is an alias for docker container kill.
+
+---
+🔹 2. Key Options / Flags
+
+| Flag             | Description                                   | Example                                 |
+| ---------------- | --------------------------------------------- | --------------------------------------- |
+| `-s`, `--signal` | Specify the signal to send (default: SIGKILL) | `docker kill -s SIGTERM mycontainer`    |
+| `[CONTAINER...]` | Names or IDs of one or more containers        | `docker kill mycontainer1 mycontainer2` |
+
+
+---
+
+🔹 3. How It Works
+
+Sends the specified signal to PID 1 in the container
+
+Default signal is SIGKILL, which immediately stops the process
+
+Container stops without waiting for cleanup
+
+Returns the container IDs/names that were killed
+
+---
+🔹 4. Examples
+
+Example 1 — Kill a running container (default SIGKILL)
+
+docker container kill mynginx
+
+Output:
+
+mynginx
+
+Container stops immediately, no graceful shutdown
+
+--
+Example 2 — Kill multiple containers
+
+docker container kill mynginx myubuntu
+
+Output:
+
+mynginx
+myubuntu
+
+--
+Example 3 — Send SIGTERM instead of SIGKILL
+
+docker container kill -s SIGTERM mynginx
+
+Sends SIGTERM to PID 1
+
+Some applications may exit gracefully
+
+--
+Example 4 — Using container IDs
+
+docker kill c1b2d3e4f5g6
+
+Can target containers using IDs instead of names
+
+---
+🔹 5. Differences Between stop and kill
+
+| Command       | Signal                      | Graceful Shutdown   | Default Timeout             | Use Case                         |
+| ------------- | --------------------------- | ------------------- | --------------------------- | -------------------------------- |
+| `docker stop` | SIGTERM → SIGKILL after 10s | ✅ Yes               | 10s (customizable via `-t`) | Graceful shutdown of containers  |
+| `docker kill` | SIGKILL (or custom)         | ❌ Usually immediate | N/A                         | Force stop container immediately |
+
+---
+🔹 6. Example comparison
+
+Stop container gracefully
+
+docker stop -t 30 mynginx
+
+Gives PID 1 up to 30s to exit before SIGKILL
+
+--
+Force kill immediately
+
+docker kill mynginx
+
+Stops container instantly
+
+---
+🔹 7. Use Cases
+
+Force stop misbehaving containers
+
+docker kill mycontainer
+
+--
+
+Send custom signals for application-specific behavior
+
+docker kill -s SIGINT mynginx
+
+--
+
+Bulk killing containers in automation
+
+docker kill $(docker container ls -q)
+
+Emergency stop in CI/CD pipelines
+
+If container hangs during tests
+
+---
+🔹 7. Best Practices
+
+Use docker stop first for graceful shutdown
+
+Use docker kill only for emergency or non-responsive containers
+
+Specify custom signal if your application handles it (e.g., SIGTERM, SIGINT)
+
+Combine with docker ps to check container state before killing
+
+---
+🔹 8. Quick Reference Table
+
+| Task                                  | Command                                    | Notes                                   |
+| ------------------------------------- | ------------------------------------------ | --------------------------------------- |
+| Kill a single container               | `docker container kill mynginx`            | Default SIGKILL                         |
+| Kill multiple containers              | `docker container kill mynginx myubuntu`   | Batch operation                         |
+| Send custom signal                    | `docker container kill -s SIGTERM mynginx` | Graceful termination if app supports it |
+| Kill by container ID                  | `docker kill c1b2d3e4f5g6`                 | Alternative to name                     |
+| Emergency kill all running containers | `docker kill $(docker container ls -q)`    | Use carefully                           |

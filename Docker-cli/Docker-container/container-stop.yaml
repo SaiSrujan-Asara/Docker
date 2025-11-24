@@ -1,0 +1,132 @@
+✅ Docker container stop
+
+docker container stop is used to stop a running container gracefully by sending a SIGTERM signal to the container’s main process (PID 1), giving it a chance to terminate cleanly. 
+
+If the container does not stop within a specified timeout, Docker sends a SIGKILL signal to forcefully terminate it.
+
+---
+🔹 1. Basic Syntax
+
+docker container stop [OPTIONS] CONTAINER [CONTAINER...]
+
+CONTAINER → container name or ID (can stop multiple containers at once)
+
+Shortcut:
+
+docker stop <container_name_or_id>
+
+docker stop is an alias for docker container stop
+
+---
+🔹 2. How It Works
+
+Sends SIGTERM to PID 1 in the container
+
+Waits default 10 seconds (can override with -t)
+
+If the container hasn’t exited, sends SIGKILL to forcefully stop it
+
+Returns the container IDs that were stopped
+
+---
+🔹 3. Examples
+
+Example 1 — Stop a single container (default 10s timeout)
+
+docker container stop mynginx
+
+Output:
+
+mynginx
+
+Sends SIGTERM, waits 10 seconds, then SIGKILL if needed
+
+--
+Example 2 — Stop multiple containers at once
+
+docker container stop mynginx myubuntu
+
+Output:
+
+mynginx
+myubuntu
+
+--
+Example 3 — Specify a shorter timeout
+
+docker container stop -t 5 mynginx
+
+Waits 5 seconds for graceful shutdown before SIGKILL
+
+--
+Example 4 — Using container IDs
+
+docker stop c1b2d3e4f5g6
+
+Can stop containers by ID instead of name
+
+---
+🔹 5. Differences Between Stop and Kill
+
+| Command       | Signal Sent                            | Graceful Shutdown           | Use Case                                               |
+| ------------- | -------------------------------------- | --------------------------- | ------------------------------------------------------ |
+| `docker stop` | SIGTERM → then SIGKILL (after timeout) | ✅ Yes                       | Graceful shutdown of containers                        |
+| `docker kill` | SIGKILL (or custom signal)             | ❌ No, immediate termination | Force stop container immediately or send custom signal |
+
+Example docker kill:
+
+docker kill -s SIGINT mynginx
+
+Sends SIGINT instead of default SIGKILL
+
+---
+
+🔹 6. Use Cases
+
+Stop a container manually
+
+docker stop mynginx
+
+--
+
+Stop multiple containers
+
+docker stop $(docker container ls -q)
+
+--
+Graceful shutdown in automation scripts
+
+docker stop -t 30 myapp
+
+Give container extra time to save state before force killing
+
+Before removing a container
+
+docker stop mynginx
+docker rm mynginx
+
+---
+🔹 7. Best Practices
+
+Prefer docker stop over docker kill for graceful shutdown
+
+Use timeout (-t) for applications that need more time to exit cleanly (databases, web servers)
+
+Stop multiple containers in scripts using docker container ls -q
+
+Check container status after stop:
+
+docker container ls -a | grep mycontainer
+
+Use container names instead of IDs for better readability in scripts
+
+---
+🔹 8. Quick Reference Table
+
+| Task                     | Command                                  | Notes                       |
+| ------------------------ | ---------------------------------------- | --------------------------- |
+| Stop a single container  | `docker container stop mynginx`          | Default 10s timeout         |
+| Stop multiple containers | `docker container stop mynginx myubuntu` | Multiple containers at once |
+| Stop with custom timeout | `docker container stop -t 5 mynginx`     | Wait 5s before SIGKILL      |
+| Stop by container ID     | `docker stop c1b2d3e4f5g6`               | Useful in scripts           |
+| Force immediate stop     | `docker kill mynginx`                    | No graceful shutdown        |

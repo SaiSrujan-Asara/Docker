@@ -1,0 +1,176 @@
+✅ Docker container inspect
+
+docker container inspect is used to retrieve detailed information about a container (or image) in JSON format. It shows everything Docker knows about a container: configuration, network settings, mount points, process IDs, and runtime metadata.
+
+---
+🔹 1. Basic Syntax
+
+docker container inspect [OPTIONS] CONTAINER [CONTAINER...]
+
+CONTAINER → container name or ID
+
+Returns JSON object(s) describing the container
+
+Shortcut:
+
+docker inspect <container_name_or_id>
+
+docker inspect is an alias for docker container inspect
+
+---
+🔹 2. Key Options / Flags
+
+| Flag       | Description                                 | Example                                              |
+| ---------- | ------------------------------------------- | ---------------------------------------------------- |
+| `--format` | Format output using Go template             | `docker inspect --format='{{.Name}}' mycontainer`    |
+| `--type`   | Specify object type: `container` or `image` | `docker inspect --type=image ubuntu`                 |
+| `-f`       | Shortcut for `--format`                     | `docker inspect -f '{{.State.Running}}' mycontainer` |
+
+---
+🔹 3. What It Returns
+
+The output is JSON, which can include:
+
+| Section           | Details                                                  |
+| ----------------- | -------------------------------------------------------- |
+| `Id`              | Container ID                                             |
+| `Name`            | Container name                                           |
+| `Path`            | Command executed (PID 1)                                 |
+| `Args`            | Arguments passed to command                              |
+| `State`           | Running/stopped status, PID, exit code, start/stop times |
+| `Config`          | Environment variables, CMD, ENTRYPOINT, exposed ports    |
+| `NetworkSettings` | IP address, ports, bridge networks                       |
+| `Mounts`          | Volumes, bind mounts                                     |
+| `HostConfig`      | Restart policies, CPU/memory limits                      |
+| `Image`           | Image ID used                                            |
+| `LogPath`         | Path to container logs on host                           |
+
+---
+🔹 4. Examples
+
+Example 1 — Basic inspection
+
+docker inspect mynginx
+
+Output (truncated JSON):
+
+[
+  {
+    "Id": "c1b2d3...",
+    "Name": "/mynginx",
+    "Path": "nginx",
+    "Args": ["-g", "daemon off;"],
+    "State": {
+      "Running": true,
+      "Pid": 12345,
+      "ExitCode": 0
+    },
+    "Config": {
+      "Env": ["NGINX_VERSION=1.23", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
+      "Cmd": ["nginx", "-g", "daemon off;"]
+    },
+    "NetworkSettings": {
+      "IPAddress": "172.17.0.2",
+      "Ports": { "80/tcp": [{"HostPort":"8080"}] }
+    }
+  }
+]
+
+--
+Example 2 — Inspect specific field using --format
+
+docker inspect --format='{{.State.Pid}}' mynginx
+
+Output:
+
+12345
+
+Returns PID of main process inside container
+
+--
+Example 3 — Get container IP
+
+docker inspect -f '{{.NetworkSettings.IPAddress}}' mynginx
+
+Output:
+
+172.17.0.2
+
+--
+Example 4 — Get restart policy
+
+docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' mynginx
+
+Output:
+
+always
+
+---
+🔹 5. Use Cases
+
+Debugging container issues
+
+Check if container is running, PID, exit code
+
+Inspect network settings, IPs, ports
+
+Automation / Scripting
+
+--
+Extract specific fields using --format for scripts
+
+docker inspect -f '{{.State.Status}}' mycontainer
+
+--
+Inspect volume mounts
+
+docker inspect -f '{{json .Mounts}}' mycontainer
+
+--
+Check container command and environment variables
+
+docker inspect -f '{{.Config.Env}} {{.Config.Cmd}}' mycontainer
+
+---
+🔹 6. Advanced Examples
+
+Get all running containers’ IPs
+
+docker ps -q | xargs -n1 docker inspect -f '{{.Name}} - {{.NetworkSettings.IPAddress}}'
+
+Output:
+
+/mynginx - 172.17.0.2
+/myubuntu - 172.17.0.3
+
+Check log path on host
+
+docker inspect -f '{{.LogPath}}' mynginx
+
+Output:
+
+/var/lib/docker/containers/c1b2d3.../c1b2d3...-json.log
+
+---
+🔹 7. Best Practices
+
+Use --format for easier parsing and automation
+
+Don’t rely on docker inspect output as human-readable — it’s JSON for machines
+
+Combine with docker ps and xargs for bulk operations
+
+Use it to confirm container configuration matches Dockerfile expectations
+
+For network troubleshooting, inspect NetworkSettings
+
+---
+🔹 8. Quick Reference Table
+
+| Task                      | Command                                                              |
+| ------------------------- | -------------------------------------------------------------------- |
+| Get PID of container      | `docker inspect -f '{{.State.Pid}}' <container>`                     |
+| Get container IP          | `docker inspect -f '{{.NetworkSettings.IPAddress}}' <container>`     |
+| Get environment variables | `docker inspect -f '{{.Config.Env}}' <container>`                    |
+| Get mount points          | `docker inspect -f '{{json .Mounts}}' <container>`                   |
+| Check restart policy      | `docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' <container>` |

@@ -587,3 +587,366 @@ A: The container continues running in background.
 | Pipe data into container                               | `-i` only                          |
 | Debug running container                                | `docker exec -it <container> bash` |
 | Prevent accidental container stop when detaching       | Use `Ctrl+P Ctrl+Q`                |
+
+
+--------------------------
+--------------------------
+PARAMETERS USED IN CONTAINER RUN
+--------------------------
+--------------------------
+
+| Environment        | Main Focus                                        |
+| ------------------ | ------------------------------------------------- |
+| 🧑‍💻 Development  | Flexibility, interactivity, code mounting         |
+| 🧪 Testing         | Ephemeral containers, automation, reproducibility |
+| 🏭 Production      | Stability, security, observability                |
+| 🔍 Troubleshooting | Debugging, introspection, temporary access        |
+
+
+🧑‍💻 1️⃣ Development Environment Parameters
+
+| Parameter      | Example                                | Purpose                                          |
+| -------------- | -------------------------------------- | ------------------------------------------------ |
+| `-it`          | `docker container run -it ubuntu bash` | Interactive shell for dev/debug                  |
+| `--name`       | `--name web-dev`                       | Easy container identification                    |
+| `-v`           | `-v $(pwd):/app`                       | Mount local source code for live editing         |
+| `-p`           | `-p 3000:3000`                         | Map container app port to host                   |
+| `--rm`         | `--rm`                                 | Auto-remove when stopped (avoid clutter)         |
+| `-e`           | `-e ENV=dev -e DEBUG=true`             | Inject dev environment variables                 |
+| `--workdir`    | `--workdir /app`                       | Set working directory inside container           |
+| `--network`    | `--network dev_net`                    | Connect to local dev network                     |
+| `--entrypoint` | `--entrypoint bash`                    | Override default entrypoint for debugging        |
+| `-u`           | `-u $(id -u):$(id -g)`                 | Run as host user to avoid file permission issues |
+
+
+🧩 Example — Full Dev Command
+
+docker container run -it --rm \
+  --name node-dev \
+  -v $(pwd):/usr/src/app \
+  -w /usr/src/app \
+  -p 3000:3000 \
+  -e NODE_ENV=development \
+  node:18 bash
+
+
+🧪 2️⃣ Testing / CI/CD Environment Parameters
+
+| Parameter       | Example                   | Purpose                                      |
+| --------------- | ------------------------- | -------------------------------------------- |
+| `--rm`          | `docker run --rm`         | Automatically clean up after test run        |
+| `-v`            | `-v $(pwd):/tests`        | Mount test directory or artifacts            |
+| `-e`            | `-e TEST_ENV=ci`          | Pass environment-specific configs            |
+| `--network`     | `--network test_net`      | Connect test containers                      |
+| `--name`        | `--name pytest-container` | Easier log tracking in CI                    |
+| `--entrypoint`  | `--entrypoint pytest`     | Override to run test runner directly         |
+| `-u`            | `-u root`                 | Sometimes needed for CI tools to write files |
+| `-w`            | `-w /tests`               | Set working directory for commands           |
+| `--pull always` | `--pull always`           | Always fetch latest image for CI consistency |
+
+docker container run --rm \
+  --name python-tests \
+  -v $(pwd):/tests \
+  -w /tests \
+  -e TEST_ENV=ci \
+  --pull always \
+  python:3.12 pytest -v
+
+
+🏭 3️⃣ Production Environment Parameters
+
+| Parameter        | Example                                                                   | Purpose                                    |          |                               |
+| ---------------- | ------------------------------------------------------------------------- | ------------------------------------------ | -------- | ----------------------------- |
+| `-d`             | `-d`                                                                      | Run container in background                |          |                               |
+| `--name`         | `--name api-service`                                                      | Consistent naming for monitoring           |          |                               |
+| `--restart`      | `--restart=always`                                                        | Auto-restart on crash or system reboot     |          |                               |
+| `-p`             | `-p 80:80`                                                                | Expose application ports                   |          |                               |
+| `-v`             | `-v app_data:/var/lib/app`                                                | Persist application data                   |          |                               |
+| `--env-file`     | `--env-file .env`                                                         | Load many env vars securely                |          |                               |
+| `--log-driver`   | `--log-driver=json-file`                                                  | Configure logging behavior                 |          |                               |
+| `--log-opt`      | `--log-opt max-size=10m --log-opt max-file=3`                             | Limit log size and rotation                |          |                               |
+| `--health-cmd`   | `--health-cmd="curl -f [http://localhost/health](http://localhost/health) |                                            | exit 1"` | Define container health check |
+| `--memory`       | `--memory=512m`                                                           | Limit memory usage                         |          |                               |
+| `--cpus`         | `--cpus=1.0`                                                              | Limit CPU usage                            |          |                               |
+| `--security-opt` | `--security-opt=no-new-privileges`                                        | Harden container                           |          |                               |
+| `--user`         | `--user 1000`                                                             | Drop root privileges                       |          |                               |
+| `--read-only`    | `--read-only`                                                             | Mount filesystem as read-only for security |          |                               |
+| `--cap-drop`     | `--cap-drop=ALL`                                                          | Remove all unnecessary Linux capabilities  |          |                               |
+
+docker container run -d \
+  --name web-app \
+  -p 443:443 \
+  --restart=always \
+  -v app_logs:/var/log/nginx \
+  -v app_data:/usr/share/nginx/html \
+  --env-file /etc/app/config.env \
+  --memory=512m \
+  --cpus=1.5 \
+  --security-opt=no-new-privileges \
+  --read-only \
+  --health-cmd="curl -f http://localhost/health || exit 1" \
+  nginx:1.25-alpine
+
+
+🔍 4️⃣ Troubleshooting / Debugging Environment Parameters
+
+| Parameter                                      | Example                                   | Purpose                                               |
+| ---------------------------------------------- | ----------------------------------------- | ----------------------------------------------------- |
+| `-it`                                          | `-it`                                     | Get interactive terminal access                       |
+| `--rm`                                         | `--rm`                                    | Auto-remove after debugging                           |
+| `--entrypoint`                                 | `--entrypoint bash`                       | Override entrypoint for manual debugging              |
+| `--network container:<id>`                     | `--network container:web-app`             | Attach to same network namespace as another container |
+| `-v /var/run/docker.sock:/var/run/docker.sock` | Mount Docker socket for admin/debug tasks |                                                       |
+| `--privileged`                                 | `--privileged`                            | Gives full privileges (for low-level debugging only)  |
+| `-e`                                           | `-e DEBUG=true`                           | Enable verbose/debug modes                            |
+| `--pid host`                                   | `--pid host`                              | View host processes (for diagnosing PID issues)       |
+| `--cap-add`                                    | `--cap-add=SYS_PTRACE`                    | Needed for debugging tools (e.g., `strace`, `gdb`)    |
+
+
+docker container run -it --rm \
+  --name debug-tools \
+  --network container:web-app \
+  --cap-add=SYS_PTRACE \
+  --entrypoint bash \
+  alpine:latest
+
+
+🧭 Best Practices Summary
+
+✅ Use --rm for short-lived and test containers
+✅ Use --restart policies in production
+✅ Use --env-file instead of -e for production secrets
+✅ Use --memory & --cpus for resource control
+✅ Use --health-cmd for observability
+✅ Avoid --privileged in production — too risky
+✅ Always use specific image versions, not latest
+
+------------------
+------------------
+run multiple commands sequentially or conditionally
+------------------
+------------------
+
+✅ 1. Using Shell (sh -c or bash -c)
+
+The easiest way to run multiple commands is to invoke a shell and pass a string of commands.
+
+Syntax
+
+docker run <image> sh -c "command1; command2; command3"
+
+Or if the container has bash:
+
+docker run <image> bash -c "command1; command2; command3"
+
+; → execute commands sequentially, regardless of success/failure
+
+&& → execute next command only if previous succeeds
+
+|| → execute next command only if previous fails
+
+---
+Example 1 — Sequential commands
+
+docker run ubuntu sh -c "echo 'Hello'; echo 'World'"
+
+Output:
+
+Hello
+World
+
+---
+Example 2 — Conditional execution
+
+docker run ubuntu sh -c "mkdir /data && echo 'Directory created'"
+
+echo 'Directory created' runs only if mkdir /data succeeds
+
+---
+Example 3 — Command on failure
+
+docker run ubuntu sh -c "cd /nonexistent || echo 'Failed to cd'"
+
+echo 'Failed to cd' runs because cd /nonexistent fails
+
+---
+✅ 2. Using -c with Interactive Mode
+
+If you want an interactive container (-it) and run multiple commands:
+
+docker run -it ubuntu bash -c "echo 'Start'; ls /; echo 'Done'"
+
+Output:
+
+Start
+bin  etc  home  usr  var
+Done
+
+---
+✅ 3. Using Script File
+
+You can write a shell script and mount it into the container, then run it:
+
+echo -e "#!/bin/sh\necho Hello\necho World" > script.sh
+docker run -v "$PWD/script.sh:/script.sh" --rm ubuntu sh /script.sh
+
+Mounts local script into container
+
+Executes multiple commands as defined in script
+
+---
+✅ 4. Using docker exec with chain commands (for running inside a running container)
+
+docker exec mycontainer sh -c "echo 'Start'; ls /; echo 'Done'"
+
+Same syntax as docker run, but runs in already running container
+
+---
+✅ 5. Using &&, ;, || explained
+
+| Operator | Behavior                               | Example                            |                                     |                  |   |              |
+| -------- | -------------------------------------- | ---------------------------------- | ----------------------------------- | ---------------- | - | ------------ |
+| `;`      | Always run next command                | `echo a; echo b` → prints a then b |                                     |                  |   |              |
+| `&&`     | Run next **only if previous succeeds** | `mkdir /data && echo created`      |                                     |                  |   |              |
+| `        |                                        | `                                  | Run next **only if previous fails** | `cd /nonexistent |   | echo failed` |
+
+---
+✅ Best Practices
+
+Use a shell (sh -c or bash -c) to run chains in docker run
+
+Prefer && over ; if failure should stop execution
+
+Use scripts for long sequences, easier to maintain
+
+Quote commands properly to avoid shell parsing issues:
+
+docker run ubuntu sh -c "echo 'Hello World'; ls /"
+
+---
+DIFFERENCE BETWEEN "sh -c" && "bash -c"
+---
+
+✅ 1. sh -c
+
+sh = POSIX-compliant shell (usually dash or ash depending on the OS)
+
+-c → takes the next string as a command to execute
+
+Syntax:
+
+sh -c "command1; command2; command3"
+
+Behavior
+
+i) Lightweight shell → almost all Linux containers have it (alpine, ubuntu)
+
+Supports basic shell features:
+
+i) command chaining (;, &&, ||)
+
+ii) variables, loops (for, while)
+
+Does NOT support Bash-specific features:
+
+[[ ]] tests
+
+(( )) arithmetic
+
+Bash arrays, source command
+
+Example
+
+docker run alpine sh -c "echo Hello; echo World"
+
+Output:
+
+Hello
+World
+
+--
+
+✅ 2. bash -c
+
+bash = GNU Bourne Again Shell → more feature-rich
+
+-c → same meaning, execute string as command
+
+Syntax:
+
+bash -c "command1; command2; command3"
+
+Behavior
+
+Supports all Bash-specific features:
+
+Arrays, [[ ]] tests
+
+(( )) arithmetic
+
+Bash functions, process substitution
+
+source command (. filename)
+
+Slightly heavier → not always installed in minimal images (like alpine)
+
+Example
+
+docker run ubuntu bash -c "arr=(a b c); echo ${arr[1]}"
+
+Output:
+
+b
+
+This would fail with sh -c because sh doesn’t support arrays
+
+
+---------
+✅ 1. Docker commands where sh -c / bash -c are used
+
+| Docker Command       | How `sh -c` / `bash -c` is used                                                                                                                                                                             | Example                                               |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| **docker run**       | Start a new container and execute multiple commands                                                                                                                                                         | `docker run ubuntu sh -c "echo Hello; echo World"`    |
+| **docker exec**      | Run commands inside a **running container**                                                                                                                                                                 | `docker exec -it mycontainer sh -c "ls /; echo Done"` |
+| **docker start -ai** | **Indirectly**: You cannot use `sh -c` here to run commands because `docker start -ai` only attaches to the **main process (PID 1)**. You would need to change the main process or run commands via `exec`. | N/A                                                   |
+
+✅ 2. Why you use it
+
+sh -c / bash -c lets you pass a string of commands to the shell instead of running one single command.
+
+This is especially useful for:
+
+Command chaining: ;, &&, ||
+
+Advanced shell features: loops, arrays, conditionals
+
+Multi-command execution in a single Docker invocation
+
+✅ 3. Examples
+
+--
+i) With docker run
+
+docker run ubuntu sh -c "echo Hello; echo World"
+
+--
+ii) With docker exec
+
+docker exec -it mycontainer bash -c "echo Start; ls /; echo Done"
+
+Opens a new shell process in a running container
+
+You can chain commands or use bash-specific features
+
+---
+✅ 4. Important Notes
+
+docker start -ai attaches to the container's PID 1, so you cannot pass sh -c or bash -c here unless PID 1 is explicitly a shell.
+
+Example: If you made the container's main process bash:
+
+docker start -ai mycontainer
+
+Then PID 1 is shell → you can type commands interactively, but you’re not passing -c automatically.
+
+docker exec is usually the preferred way to run multiple commands inside an already running container.

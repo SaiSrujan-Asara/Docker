@@ -1,0 +1,172 @@
+✅ Docker container wait
+
+docker container wait blocks (waits) until the specified container stops and then outputs the container’s exit code.
+
+⚠️ The command does not stop the container; it only waits for it to exit
+
+*** So in short: Yes, for wait to “take effect” and return, the container must stop, either automatically or manually ***
+
+*** It is not for stopping containers, not for inspecting them, not for interacting with them — just for waiting and capturing exit status. ***
+---
+🔹 2. How It Works
+
+Docker waits until the container’s main process (PID 1) exits
+
+When the container exits, Docker returns the exit code
+
+Multiple containers can be waited on at the same time
+
+---
+🔹 3. Examples
+
+Example 1 — Wait for a single container
+
+docker container wait myubuntu
+
+Output:
+
+0
+
+The container exited successfully with exit code 0
+
+--
+
+Example 2 — Wait for multiple containers
+
+docker container wait myubuntu mynginx
+
+Output:
+
+0
+1
+
+Returns exit codes for each container in the order specified
+
+--
+Example 3 — Use with docker run
+
+docker run --name testbusybox busybox sh -c "exit 5" &
+
+docker container wait testbusybox
+
+Output:
+
+5
+
+Shows the exit code of the container process
+
+--
+Example 4 — Use in scripts
+
+docker run --name myscript busybox sh -c "echo Hello; exit 7" &
+exit_code=$(docker container wait myscript)
+echo "Container exited with code $exit_code"
+
+Output:
+
+Hello
+Container exited with code 7
+
+Useful for automation pipelines
+---
+
+🔹 4. Use Cases
+
+CI/CD pipelines
+
+Wait for a test container to finish before proceeding
+
+Automation scripts
+
+Perform actions based on container exit codes
+
+Debugging
+
+Check exit codes of containers to identify issues
+
+---
+🔹 5. Differences from Other Commands
+
+| Command          | Action                     | Returns      | Blocks?       | Use Case                 |
+| ---------------- | -------------------------- | ------------ | ------------- | ------------------------ |
+| `docker wait`    | Wait for container to exit | Exit code    | ✅ Yes, blocks | Scripts / automation     |
+| `docker stop`    | Stop container gracefully  | Container ID | ❌ No          | Stop containers manually |
+| `docker kill`    | Force stop container       | Container ID | ❌ No          | Emergency stop           |
+| `docker restart` | Stop then start container  | Container ID | ❌ No          | Restart workflow         |
+
+---
+🔹 6. Best Practices
+
+Use docker container wait in scripts or automation where you need exit codes
+
+Combine with docker run to capture container exit status
+
+Works best with short-lived containers that perform a task and exit
+
+Avoid using wait with long-running daemons unless intentional
+
+---
+🔹 7. Quick Reference Table
+
+| Task                         | Command                                           | Notes                       |
+| ---------------------------- | ------------------------------------------------- | --------------------------- |
+| Wait for container to stop   | `docker container wait mycontainer`               | Returns exit code           |
+| Wait for multiple containers | `docker container wait mycontainer1 mycontainer2` | Returns exit codes in order |
+| Use in scripts               | `exit_code=$(docker container wait mycontainer)`  | Capture exit code for logic |
+
+
+---
+✅ What is the use of docker container wait
+
+The docker container wait command is used to wait for a container to exit and to get its exit code.
+
+Primary use: Automation and scripting
+
+For example, in CI/CD pipelines, you might run a container that performs a task (like running tests) and then need to know when it finishes and whether it succeeded (based on the exit code).
+
+It blocks the command line until the container’s main process (PID 1) exits.
+
+It does not stop the container; it only waits for it to stop on its own.
+
+--
+🔹 Important Clarification
+
+docker wait only returns when the container exits naturally (the main process finishes).
+
+You do not need to stop it manually if it’s designed to run and exit.
+
+--
+If the container is a long-running daemon (like nginx), docker wait will block indefinitely because the container does not exit.
+--
+
+Example:
+
+docker run --name mytask busybox sh -c "echo Hello; exit 7" &
+
+docker container wait mytask
+
+Output:
+
+7
+
+Here, the container exits on its own (exit 7), so wait returns the exit code.
+
+No need to stop the container manually.
+
+--
+If the container is running a daemon (never exits)
+--
+
+docker run --name mynginx nginx
+
+docker container wait mynginx
+
+This command will block forever because nginx runs continuously and never exits.
+
+To make wait return in this case, you must stop the container first:
+
+docker stop mynginx
+
+docker container wait mynginx
+
+Now wait will immediately return the exit code after the container stops.

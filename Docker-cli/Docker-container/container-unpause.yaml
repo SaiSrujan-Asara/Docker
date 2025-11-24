@@ -1,0 +1,122 @@
+✅ Docker container unpause
+
+docker container unpause resumes all processes in a paused container by sending the SIGCONT signal. 
+
+This restores the container to its running state, exactly where it was before being paused.
+
+⚠️ The container continues from the exact state it was in before pause. Any temporary suspension of CPU usage ends.
+
+---
+🔹 1. Basic Syntax
+
+docker container unpause CONTAINER [CONTAINER...]
+
+Shortcut:
+
+docker unpause <container_name_or_id>
+
+docker unpause is an alias for docker container unpause.
+
+--
+🔹 2. How It Works
+
+Sends SIGCONT to all paused processes in the container
+
+Processes resume execution exactly where they left off
+
+Container returns to normal running state
+
+CPU usage returns to normal, memory remains allocated
+
+--
+🔹 3. Examples
+
+Example 1 — Unpause a single container
+
+docker container unpause mynginx
+
+Output:
+
+mynginx
+
+Container resumes from the paused state
+
+--
+Example 2 — Unpause multiple containers
+
+docker container unpause mynginx myubuntu
+
+Output:
+
+mynginx
+myubuntu
+
+Batch resume of multiple paused containers
+
+--
+Example 3 — Verify container status
+
+docker container ls
+
+Output:
+
+CONTAINER ID   IMAGE     STATUS
+c1b2d3e4f5g6   nginx     Up 2 hours
+
+Previously paused container now shows Up, indicating it is running
+
+--
+🔹 4. Use Cases
+
+Resume a container after temporary suspension
+
+Example: Paused during high CPU usage, now resuming normal operation
+
+Debugging / testing
+
+Pause container to inspect its state, then unpause to continue
+
+Automation scripts
+
+Pause containers during certain operations, then unpause when ready
+
+---
+🔹 5. Differences from Stop / Restart / Pause
+
+| Command   | Action                           | CPU Usage | Memory Usage    | Graceful Shutdown | Use Case                        |
+| --------- | -------------------------------- | --------- | --------------- | ----------------- | ------------------------------- |
+| `pause`   | Freeze container (SIGSTOP)       | 0         | Memory retained | ❌                 | Temporary suspension            |
+| `unpause` | Resume container (SIGCONT)       | Normal    | Memory retained | ❌                 | Resume paused container         |
+| `stop`    | Stop container (SIGTERM→SIGKILL) | 0         | 0               | ✅                 | Graceful termination            |
+| `restart` | Stop then start container        | Normal    | Reset           | ✅                 | Quick recovery or apply changes |
+
+---
+🔹 6. Best Practices
+
+Only unpause containers that were paused
+
+Monitor container state with docker container ls before and after unpause
+
+Combine pause/unpause for resource management or debugging workflows
+
+Avoid unpausing containers in critical I/O operations if it could cause issues
+
+---
+🔹 7. Quick Reference Table
+
+| Task                        | Command                                     | Notes                        |
+| --------------------------- | ------------------------------------------- | ---------------------------- |
+| Unpause a container         | `docker container unpause mynginx`          | Resumes all paused processes |
+| Unpause multiple containers | `docker container unpause mynginx myubuntu` | Batch resume                 |
+| Verify running state        | `docker container ls`                       | Status shows “Up”            |
+
+---
+✅ Summary:
+
+docker container unpause = resume a previously paused container
+
+Uses SIGCONT, processes continue from the paused state
+
+CPU usage returns to normal; memory is preserved
+
+Often used in conjunction with docker container pause for temporary suspension or resource management
